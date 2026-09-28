@@ -1,0 +1,40 @@
+{
+  "phase": 4,
+  "status": "PASS",
+  "timestamp": "2026-09-23T16:44:08.601559+00:00",
+  "corpus_count": 3708,
+  "bm25_document_count": 3708,
+  "faiss_document_count": 3708,
+  "metadata_count": 3708,
+  "alignment_status": "PASS",
+  "bm25": {
+    "status": "PASS"
+  },
+  "dense_retrieval": {
+    "status": "PASS"
+  },
+  "rrf": {
+    "status": "PASS",
+    "rrf_k": 60
+  },
+  "hybrid_retrieval": {
+    "status": "PASS"
+  },
+  "test_queries_tested": 5,
+  "test_queries_successful": 5,
+  "duplicate_results_count": 0,
+  "top_k_respected": true,
+  "tests": {
+    "test_h_faiss_metadata_alignment": "PASS",
+    "test_a_bm25": "PASS",
+    "test_b_dense": "PASS",
+    "test_c_hybrid": "PASS",
+    "test_d_verse_id_validity": "PASS",
+    "test_e_no_duplicates": "PASS",
+    "test_f_rrf_deterministic": "PASS",
+    "test_g_rrf_sorted_descending": "PASS",
+    "test_i_english_only": "PASS",
+    "test_j_top_k_respected": "PASS"
+  },
+  "failures": []
+}

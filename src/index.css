@@ -1,0 +1,241 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-parchment: #FBF7EE;
+    --bg-parchment-warm: #F4ECE1;
+    --bg-card: #FFFDF9;
+    --ink-dark: #231610;
+    --ink-muted: #5C493E;
+    --maroon-deep: #5B1612;
+    --maroon-royal: #430F0C;
+    --saffron: #C85A17;
+    --gold-antique: #B6862C;
+    --gold-border: #DECBA8;
+    --sage-green: #2B5B3F;
+  }
+
+  body,
+  button,
+  input,
+  select,
+  textarea,
+  nav,
+  .font-inter {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    background-color: #FBF7EE;
+    color: #231610;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Main headings: Inter SemiBold */
+  h1,
+  h2,
+  .font-cinzel {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 600;
+  }
+
+  /* Optional scholarly accent headings: Lora */
+  h3,
+  .font-display,
+  .font-scholarly {
+    font-family: 'Lora', Georgia, serif;
+  }
+
+  /* Verse translations: Source Sans 3 */
+  .font-serif-prose,
+  .font-translation {
+    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* Sanskrit / Devanagari: Noto Sans Devanagari */
+  .font-sanskrit {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+  }
+}
+
+@keyframes slowSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes messageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes verseHighlightGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(200, 90, 23, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(200, 90, 23, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 90, 23, 0);
+  }
+}
+
+@keyframes slowSpinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes gentleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.animate-mandala-slow {
+  animation: slowSpin 120s linear infinite;
+}
+
+.animate-mandala-reverse {
+  animation: slowSpinReverse 160s linear infinite;
+}
+
+.animate-float-gentle {
+  animation: gentleFloat 3s ease-in-out infinite;
+}
+
+@keyframes lotusUnfurl {
+  0% {
+    opacity: 0;
+    transform: scale(0.35) rotate(-12deg);
+  }
+  45% {
+    opacity: 0.65;
+    transform: scale(1.05) rotate(4deg);
+  }
+  80% {
+    opacity: 0.45;
+    transform: scale(1.65) rotate(14deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.15) rotate(20deg);
+  }
+}
+
+@keyframes lotusRingSpin {
+  from {
+    transform: rotate(0deg) scale(0.9);
+  }
+  to {
+    transform: rotate(28deg) scale(1.12);
+  }
+}
+
+@keyframes lotusLightWash {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 0.92;
+  }
+}
+
+@keyframes dashboardLotusReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-lotus-unfurl {
+  animation: lotusUnfurl 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-lotus-ring-outer {
+  animation: lotusRingSpin 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-lotus-ring-mid {
+  animation: lotusRingSpin 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) reverse forwards;
+}
+
+.animate-lotus-ring-inner {
+  animation: lotusRingSpin 2200ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-lotus-wash {
+  animation: lotusLightWash 2200ms ease-in-out forwards;
+}
+
+.animate-dashboard-lotus-enter {
+  animation: dashboardLotusReveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-page-enter {
+  animation: fadeSlideUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-message-enter {
+  animation: messageEnter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-verse-highlight {
+  animation: verseHighlightGlow 1.8s cubic-bezier(0.16, 1, 0.3, 1) 1;
+}
+
+/* Crisp accessible focus ring across interactive controls */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #C85A17;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-mandala-slow,
+  .animate-page-enter,
+  .animate-message-enter,
+  .animate-verse-highlight {
+    animation: none;
+  }
+}

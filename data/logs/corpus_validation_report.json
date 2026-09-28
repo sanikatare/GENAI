@@ -1,0 +1,37 @@
+{
+  "status": "PASSED",
+  "timestamp": "2026-09-28T17:21:03.985Z",
+  "corpus_scope": "Rig Veda Mandalas 1–10",
+  "total_mandalas": 10,
+  "total_hymns": 1028,
+  "total_verses": 10546,
+  "hymns_per_mandala": {
+    "1": 191,
+    "2": 43,
+    "3": 62,
+    "4": 58,
+    "5": 87,
+    "6": 75,
+    "7": 104,
+    "8": 103,
+    "9": 114,
+    "10": 191
+  },
+  "verses_per_mandala": {
+    "1": 2003,
+    "2": 429,
+    "3": 617,
+    "4": 599,
+    "5": 727,
+    "6": 761,
+    "7": 841,
+    "8": 1716,
+    "9": 1100,
+    "10": 1753
+  },
+  "missing_english_text": 0,
+  "missing_sanskrit": 142,
+  "missing_transliteration": 142,
+  "duplicate_verse_ids": 0,
+  "malformed_verse_ids": 0
+}

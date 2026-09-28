@@ -1,0 +1,11 @@
+{
+  "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+  "onnx_model_name": "Xenova/all-MiniLM-L6-v2",
+  "embedding_dimension": 384,
+  "similarity_metric": "cosine",
+  "index_type": "IndexFlatIP",
+  "normalization": "L2",
+  "total_verses": 10546,
+  "source_corpus": "data/knowledge_base/complete_rigveda_corpus.json",
+  "created_at": "2026-09-28T19:11:35.229Z"
+}

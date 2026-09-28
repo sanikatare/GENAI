@@ -1,0 +1,8 @@
+{
+  "name": "Explainable Rig Veda RAG",
+  "description": "Explainable Conversational RAG research interface over Ralph T. H. Griffith's 1896 English translation of Rig Veda Mandala 1 and Mandala 10, featuring hybrid BM25 + semantic RRF retrieval and sentence-level claim attribution.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

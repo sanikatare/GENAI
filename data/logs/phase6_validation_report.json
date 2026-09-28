@@ -1,0 +1,28 @@
+{
+  "phase": 6,
+  "status": "PASS",
+  "timestamp": "2026-09-23T16:44:08.612161+00:00",
+  "provenance_preservation": "PASS",
+  "retrieval_explanation": "PASS",
+  "citation_integrity": "PASS",
+  "invalid_citation_detection": "PASS",
+  "claim_attribution": "PASS",
+  "unsupported_claim_detection": "PASS",
+  "evidence_sufficiency": "PASS",
+  "evidence_based_abstention": "PASS",
+  "english_only_constraint": "PASS",
+  "regression_status": "PASS",
+  "tests": {
+    "test_1_provenance_preservation": "PASS",
+    "test_2_retrieval_explanation": "PASS",
+    "test_3_citation_integrity": "PASS",
+    "test_4_invalid_citation_detection": "PASS",
+    "test_5_claim_attribution": "PASS",
+    "test_6_unsupported_claim_detection": "PASS",
+    "test_7_evidence_sufficiency": "PASS",
+    "test_8_evidence_based_abstention": "PASS",
+    "test_9_english_only_constraint": "PASS",
+    "test_10_regression_check": "PASS"
+  },
+  "failures": []
+}

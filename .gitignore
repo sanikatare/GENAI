@@ -1,0 +1,29 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+frontend/.env
+frontend/.env.local
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Node modules and build output
+node_modules/
+dist/
+
+# Logs and system generated artifacts
+*.log

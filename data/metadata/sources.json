@@ -1,0 +1,43 @@
+{
+  "corpus_name": "Rig Veda Samhita (Mandalas 1–10)",
+  "primary_retrieval_language": "English",
+  "translations": [
+    {
+      "translator": "Ralph T. H. Griffith",
+      "title": "The Hymns of the Rigveda",
+      "edition": "1896 (2nd Edition, Kotagiri)",
+      "source_url": "https://sacred-texts.com/hin/rigveda/index.htm",
+      "license": "Public Domain"
+    },
+    {
+      "translator": "H. H. Wilson",
+      "title": "Rig-Veda Sanhita: A Collection of Ancient Hindu Hymns",
+      "edition": "1866",
+      "source_url": "https://sacred-texts.com/hin/rigveda/index.htm",
+      "license": "Public Domain"
+    }
+  ],
+  "sanskrit_source": {
+    "edition": "Theodor Aufrecht / Padapatha & Samhita Devanagari Text",
+    "fields": [
+      "sanskrit",
+      "transliteration",
+      "anukramani",
+      "deity"
+    ]
+  },
+  "mandalas_covered": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "total_hymns": 1028,
+  "total_verses": 10546
+}

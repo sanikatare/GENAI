@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "processed_file": "C:\\Users\\DELL\\Downloads\\genai\\genai\\data\\processed\\rigveda_verses.jsonl",
+  "total_records": 3708,
+  "total_verses_extracted": 3708,
+  "mandala_1_hymns_covered": 191,
+  "mandala_1_missing_hymns": [],
+  "mandala_1_verses": 1970,
+  "mandala_10_hymns_covered": 191,
+  "mandala_10_missing_hymns": [],
+  "mandala_10_verses": 1738,
+  "unexpected_mandalas": [],
+  "parse_errors": 0,
+  "missing_metadata_records": 0,
+  "empty_verses": 0,
+  "invalid_verse_id_format": 0,
+  "duplicate_verse_ids_count": 0,
+  "duplicate_records_count": 0,
+  "devanagari_violations_count": 0,
+  "devanagari_violating_ids": []
+}

@@ -1,0 +1,1154 @@
+[
+  {
+    "id": "q01",
+    "question": "I laud Agni, the chosen Priest, God, minister of sacrifice.",
+    "expected_verse_ids": [
+      "RV_1_1_1"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Agni is lauded as the chosen priest, god, and minister of sacrifice in RV_1_1_1.",
+    "context_history": []
+  },
+  {
+    "id": "q02",
+    "question": "Agni is Lord of riches for the man who serves him readily with sacred songs.",
+    "expected_verse_ids": [
+      "RV_1_70_3"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Agni is the lord of riches for the worshipper serving him with songs [RV_1_70_3].",
+    "context_history": []
+  },
+  {
+    "id": "q03",
+    "question": "This Agni is the best of Kanvas, Kanvas Friend, Conqueror of the foe.",
+    "expected_verse_ids": [
+      "RV_10_115_5"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Agni is praised as the friend of Kanvas and conqueror of foes [RV_10_115_5].",
+    "context_history": []
+  },
+  {
+    "id": "q04",
+    "question": "Where is famed Indra heard of? With what folk is he renowned to-day as Mitra is?",
+    "expected_verse_ids": [
+      "RV_10_22_1"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Indra's fame is questioned and praised among folk like Mitra [RV_10_22_1].",
+    "context_history": []
+  },
+  {
+    "id": "q05",
+    "question": "What is that Indra like, what is his aspect whose envoy, Sarama, from afar thou comest?",
+    "expected_verse_ids": [
+      "RV_10_108_3"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "The Panis question Sarama about Indra's aspect [RV_10_108_3].",
+    "context_history": []
+  },
+  {
+    "id": "q06",
+    "question": "Now and of old the home of wealth, the mansion of what is born and what was born aforetime.",
+    "expected_verse_ids": [
+      "RV_1_96_7"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Agni is described as the home of wealth of all that is born [RV_1_96_7].",
+    "context_history": []
+  },
+  {
+    "id": "q07",
+    "question": "Blest be the wood that feeds the active Agni: within the two great worlds hath Agni entered.",
+    "expected_verse_ids": [
+      "RV_10_80_2"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "The wood feeding Agni is blest as he enters the two worlds [RV_10_80_2].",
+    "context_history": []
+  },
+  {
+    "id": "q08",
+    "question": "Thou art Presenter and the chief Invoker, thou Director, Purifier, great High Priest by birth.",
+    "expected_verse_ids": [
+      "RV_1_94_6"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Agni is the presenter, invoker, purifier, and high priest [RV_1_94_6].",
+    "context_history": []
+  },
+  {
+    "id": "q09",
+    "question": "I sit as Priest most skilled in sacrificing: the Maruts and all Deities impel me.",
+    "expected_verse_ids": [
+      "RV_10_52_2"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "The priest skilled in sacrifice is impelled by Maruts and all deities [RV_10_52_2].",
+    "context_history": []
+  },
+  {
+    "id": "q10",
+    "question": "For then the net of Law, Dyaus, and the wide expanse, Earth, Worship, and Devotion meet for highest praise.",
+    "expected_verse_ids": [
+      "RV_10_92_4"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Law, Dyaus, Earth, and Worship meet for highest praise [RV_10_92_4].",
+    "context_history": []
+  },
+  {
+    "id": "q11",
+    "question": "Worthy is Agni to be praised by living as by ancient seers. He shall bring hitherward the Gods.",
+    "expected_verse_ids": [
+      "RV_1_1_2"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Agni is worthy of praise by ancient and living seers and brings the Gods [RV_1_1_2].",
+    "context_history": []
+  },
+  {
+    "id": "q12",
+    "question": "Through Agni man obtaineth wealth, yea, plenty waxing day by day, Most rich in heroes, glorious.",
+    "expected_verse_ids": [
+      "RV_1_1_3"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Through Agni one obtains wealth and glory day by day [RV_1_1_3].",
+    "context_history": []
+  },
+  {
+    "id": "q13",
+    "question": "I Will declare the manly deeds of Indra, the first that he achieved, the Thunder-wielder.",
+    "expected_verse_ids": [
+      "RV_1_32_1"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "The hymn begins declaring the heroic deeds of Indra slaying the dragon [RV_1_32_1].",
+    "context_history": []
+  },
+  {
+    "id": "q14",
+    "question": "A Thousand heads hath Purusha, a thousand eyes, a thousand feet. On every side pervading earth.",
+    "expected_verse_ids": [
+      "RV_10_90_1"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "Purusha is described with a thousand heads, eyes, and feet pervading the earth [RV_10_90_1].",
+    "context_history": []
+  },
+  {
+    "id": "q15",
+    "question": "Then was not non-existent nor existent: there was no realm of air, no sky beyond it.",
+    "expected_verse_ids": [
+      "RV_10_129_1"
+    ],
+    "question_type": "direct_retrieval",
+    "answerability": "answerable",
+    "reference_answer": "In the Nasadiya Sukta, neither non-existence nor existence was present [RV_10_129_1].",
+    "context_history": []
+  },
+  {
+    "id": "q16",
+    "question": "Which verse is the opening invocation of Rig Veda Mandala 1 Sukta 1?",
+    "expected_verse_ids": [
+      "RV_1_1_1"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "The opening verse of Mandala 1 Sukta 1 is RV_1_1_1, lauding Agni as priest and minister of sacrifice.",
+    "context_history": []
+  },
+  {
+    "id": "q17",
+    "question": "Where is the famous final harmony verse 'Assemble, speak together: let your minds be all of one accord' located?",
+    "expected_verse_ids": [
+      "RV_10_191_2"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "The harmony verse calling for united minds is found in RV_10_191_2.",
+    "context_history": []
+  },
+  {
+    "id": "q18",
+    "question": "What does Mandala 10 Sukta 191 Verse 4 state regarding united hearts and minds?",
+    "expected_verse_ids": [
+      "RV_10_191_4"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "RV_10_191_4 states 'One and the same be your resolve, and be your minds of one accord, that it may be well for you.'",
+    "context_history": []
+  },
+  {
+    "id": "q19",
+    "question": "What verse in Mandala 1 Sukta 32 describes Indra slaying the dragon Vritra on the mountain?",
+    "expected_verse_ids": [
+      "RV_1_32_1",
+      "RV_1_32_2"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "Indra slaying the dragon resting on the mountain is in RV_1_32_1 and RV_1_32_2.",
+    "context_history": []
+  },
+  {
+    "id": "q20",
+    "question": "Find the verse in Sukta 164 stating that two birds with fair wings knit with bonds of friendship embrace the same tree.",
+    "expected_verse_ids": [
+      "RV_1_164_20"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "The two birds allegory is found in RV_1_164_20.",
+    "context_history": []
+  },
+  {
+    "id": "q21",
+    "question": "What verse mentions the creation of the moon from Purusha's mind and the sun from his eye?",
+    "expected_verse_ids": [
+      "RV_10_90_13"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "The moon born from the mind and sun from the eye is described in RV_10_90_13.",
+    "context_history": []
+  },
+  {
+    "id": "q22",
+    "question": "Which verse in Sukta 108 records Sarama announcing that she comes as an envoy of Indra seeking treasures?",
+    "expected_verse_ids": [
+      "RV_10_108_2"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "Sarama states she is an envoy of Indra in RV_10_108_2.",
+    "context_history": []
+  },
+  {
+    "id": "q23",
+    "question": "Where does Mandala 1 describe the Ashvins bringing sweet food to the pious sacrificer?",
+    "expected_verse_ids": [
+      "RV_1_118_1",
+      "RV_1_118_2"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "The Ashvins' chariot carrying sweet gifts is praised in RV_1_118_1 and RV_1_118_2.",
+    "context_history": []
+  },
+  {
+    "id": "q24",
+    "question": "Which verse in Mandala 10 Sukta 129 asks who truly knows whence this creation originated?",
+    "expected_verse_ids": [
+      "RV_10_129_6"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "The question 'Who verily knows and who can here declare it, whence it was born and whence comes this creation?' is in RV_10_129_6.",
+    "context_history": []
+  },
+  {
+    "id": "q25",
+    "question": "What verse in Mandala 1 describes the Maruts as spotted deer riders armed with lightning spearmen?",
+    "expected_verse_ids": [
+      "RV_1_85_4",
+      "RV_1_85_5"
+    ],
+    "question_type": "verse_lookup",
+    "answerability": "answerable",
+    "reference_answer": "The bright Maruts armed with lightning on their chariots are described in RV_1_85_4 and RV_1_85_5.",
+    "context_history": []
+  },
+  {
+    "id": "q26",
+    "question": "Who performs the priestly role during the sacrifice?",
+    "expected_verse_ids": [
+      "RV_1_1_1",
+      "RV_1_94_6",
+      "RV_10_52_2"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Agni performs the priestly role as hotar, presenter, and minister of sacrifice [RV_1_1_1, RV_1_94_6].",
+    "context_history": []
+  },
+  {
+    "id": "q27",
+    "question": "What is the role of Agni as a protector of singers and friend of Kanvas?",
+    "expected_verse_ids": [
+      "RV_10_115_5"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Agni protects the Kanvas, conquers their enemies, and acts as their steadfast friend [RV_10_115_5].",
+    "context_history": []
+  },
+  {
+    "id": "q28",
+    "question": "Where is Indra described as famed and renowned among the Rishi sages?",
+    "expected_verse_ids": [
+      "RV_10_22_1"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Indra's fame is renowned like Mitra among folk [RV_10_22_1].",
+    "context_history": []
+  },
+  {
+    "id": "q29",
+    "question": "How is Sarama described as an envoy questioning Indra's aspect?",
+    "expected_verse_ids": [
+      "RV_10_108_3"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Sarama is addressed by the Panis who inquire about Indra's power and appearance [RV_10_108_3].",
+    "context_history": []
+  },
+  {
+    "id": "q30",
+    "question": "What is said about Agni being the lord of wealth and riches for his worshippers?",
+    "expected_verse_ids": [
+      "RV_1_70_3",
+      "RV_1_96_7"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Agni bestows immense wealth upon worshippers who readily sing his praise [RV_1_70_3, RV_1_96_7].",
+    "context_history": []
+  },
+  {
+    "id": "q31",
+    "question": "How does wood serve as fuel for Agni across the two worlds?",
+    "expected_verse_ids": [
+      "RV_10_80_2"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "The sacred wood feeds Agni as he permeates the two great worlds [RV_10_80_2].",
+    "context_history": []
+  },
+  {
+    "id": "q32",
+    "question": "What is said about unity among Varuna, Indra, Mitra, Savitar, and Bhaga?",
+    "expected_verse_ids": [
+      "RV_10_92_4"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "The deities meet in harmony under the supreme net of Law [RV_10_92_4].",
+    "context_history": []
+  },
+  {
+    "id": "q33",
+    "question": "Who is praised as the god of fire and minister of oblation?",
+    "expected_verse_ids": [
+      "RV_1_1_1"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Agni is the divine minister who receives and carries oblations to the gods [RV_1_1_1].",
+    "context_history": []
+  },
+  {
+    "id": "q34",
+    "question": "How is Indra described in relation to Indu and repelling treachery?",
+    "expected_verse_ids": [
+      "RV_10_144_6"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Indu strengthens Indra to repel treachery and triumph over foes [RV_10_144_6].",
+    "context_history": []
+  },
+  {
+    "id": "q35",
+    "question": "How are the Gayatri, Tristup, and Jagati metres described in the hymn?",
+    "expected_verse_ids": [
+      "RV_1_164_23"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Metres such as Gayatri, Tristup, and Jagati are praised as foundational to immortality [RV_1_164_23].",
+    "context_history": []
+  },
+  {
+    "id": "q36",
+    "question": "How did Indra release the waters imprisoned in the mountain caverns?",
+    "expected_verse_ids": [
+      "RV_1_32_1",
+      "RV_1_32_2"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Indra smote the dragon with his vajra thunderbolt and let the waters flow freely like lowing cows [RV_1_32_1, RV_1_32_2].",
+    "context_history": []
+  },
+  {
+    "id": "q37",
+    "question": "How does Dawn (Ushas) arouse all living creatures to action each morning?",
+    "expected_verse_ids": [
+      "RV_1_48_1",
+      "RV_1_48_5"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Ushas brings wealth and light, rousing birds and men to their daily toil [RV_1_48_1, RV_1_48_5].",
+    "context_history": []
+  },
+  {
+    "id": "q38",
+    "question": "What is the cosmic significance of the primal sacrifice performed by the gods in Purusha Sukta?",
+    "expected_verse_ids": [
+      "RV_10_90_6",
+      "RV_10_90_7"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "The gods used Purusha as the victim in the cosmic sacrifice, from which all creatures and orders arose [RV_10_90_6].",
+    "context_history": []
+  },
+  {
+    "id": "q39",
+    "question": "What was stirring before creation when darkness was concealed by darkness?",
+    "expected_verse_ids": [
+      "RV_10_129_3"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "Darkness was covered by darkness at first; through the power of heat that One arose [RV_10_129_3].",
+    "context_history": []
+  },
+  {
+    "id": "q40",
+    "question": "How does the final hymn of the Rig Veda describe communal concord in speech and intention?",
+    "expected_verse_ids": [
+      "RV_10_191_2",
+      "RV_10_191_3"
+    ],
+    "question_type": "meaning_paraphrase",
+    "answerability": "answerable",
+    "reference_answer": "The hymn exhorts all worshippers to speak with one voice, share common purpose, and unite in prayer [RV_10_191_2, RV_10_191_3].",
+    "context_history": []
+  },
+  {
+    "id": "q41",
+    "question": "What is the Vedic concept of cosmic order and sacred truth (Rita) portrayed in Mandala 1?",
+    "expected_verse_ids": [
+      "RV_1_1_8",
+      "RV_1_23_5"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Agni and the gods are guardians of Rita (eternal Law/Order), shining brightly in the sacred precincts [RV_1_1_8].",
+    "context_history": []
+  },
+  {
+    "id": "q42",
+    "question": "Explain the concept of Purusha as the cosmic source of all living beings and social classes.",
+    "expected_verse_ids": [
+      "RV_10_90_11",
+      "RV_10_90_12"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Purusha's body parts form the universe: the Brahmana from his mouth, Rajanya from his arms, Vaishya from thighs, Shudra from feet [RV_10_90_12].",
+    "context_history": []
+  },
+  {
+    "id": "q43",
+    "question": "How does the Nasadiya Sukta (Hymn of Creation) conceive of desire (Kama) in creation?",
+    "expected_verse_ids": [
+      "RV_10_129_4"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Desire was the primal seed and germ of spirit that arose in the beginning [RV_10_129_4].",
+    "context_history": []
+  },
+  {
+    "id": "q44",
+    "question": "What is the conceptual significance of Soma as both an invigorating ritual draught and a deity?",
+    "expected_verse_ids": [
+      "RV_1_91_1",
+      "RV_1_91_2"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Soma is wise, guiding the singer, sovereign lord of plants, and giver of life and vigor [RV_1_91_1, RV_1_91_2].",
+    "context_history": []
+  },
+  {
+    "id": "q45",
+    "question": "How is the dual nature of Heaven and Earth (Dyava-Prithivi) conceived as universal parents?",
+    "expected_verse_ids": [
+      "RV_1_185_1",
+      "RV_1_185_2"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Heaven and Earth are benevolent parents who sustain and protect all creatures [RV_1_185_1].",
+    "context_history": []
+  },
+  {
+    "id": "q46",
+    "question": "What is the philosophical riddle of the one reality spoken of in many names in Sukta 164?",
+    "expected_verse_ids": [
+      "RV_1_164_46"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "The text states 'They call him Indra, Mitra, Varuna, Agni... To what is One, sages give many a title' [RV_1_164_46].",
+    "context_history": []
+  },
+  {
+    "id": "q47",
+    "question": "Explain the concept of communal solidarity (Samjnana) expressed in the final hymn of Mandala 10.",
+    "expected_verse_ids": [
+      "RV_10_191_2",
+      "RV_10_191_4"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Samjnana is the supreme ideal of united assembly, shared devotion, and harmonious hearts [RV_10_191_2, RV_10_191_4].",
+    "context_history": []
+  },
+  {
+    "id": "q48",
+    "question": "What is the role of Agni as the divine messenger (Duta) connecting mortals and immortals?",
+    "expected_verse_ids": [
+      "RV_1_12_1",
+      "RV_1_12_2"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Agni serves as the tireless envoy between humans and the heavenly gods [RV_1_12_1].",
+    "context_history": []
+  },
+  {
+    "id": "q49",
+    "question": "How is Vac (Sacred Speech) conceptualized in Mandala 10 as pervading all worlds?",
+    "expected_verse_ids": [
+      "RV_10_125_1",
+      "RV_10_125_3"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Vac declares herself the queen, gatherer of riches, and queen of sacrifice whose presence sustains the gods [RV_10_125_3].",
+    "context_history": []
+  },
+  {
+    "id": "q50",
+    "question": "What is the concept of death and the path of the Fathers ruled by Yama in Mandala 10?",
+    "expected_verse_ids": [
+      "RV_10_14_1",
+      "RV_10_14_2"
+    ],
+    "question_type": "conceptual",
+    "answerability": "answerable",
+    "reference_answer": "Yama was the first who found the pathway to the heavenly realm for departed ancestors [RV_10_14_1, RV_10_14_2].",
+    "context_history": []
+  },
+  {
+    "id": "q51",
+    "question": "How do verses in Mandala 1 and Mandala 10 differently characterize Agni as priest versus conqueror?",
+    "expected_verse_ids": [
+      "RV_1_1_1",
+      "RV_10_115_5"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "In RV_1_1_1 Agni is primarily the sacrificing priest, while in RV_10_115_5 he is celebrated as a conqueror of foes.",
+    "context_history": []
+  },
+  {
+    "id": "q52",
+    "question": "Compare the depiction of Indra in Mandala 1 Sukta 32 and Mandala 10 Sukta 22.",
+    "expected_verse_ids": [
+      "RV_1_32_1",
+      "RV_10_22_1"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "RV_1_32_1 highlights Indra's mythic victory over Vritra, whereas RV_10_22_1 emphasizes his widespread renown among folk.",
+    "context_history": []
+  },
+  {
+    "id": "q53",
+    "question": "How do the duties of Agni in RV_1_94_6 compare with the priest's role in RV_10_52_2?",
+    "expected_verse_ids": [
+      "RV_1_94_6",
+      "RV_10_52_2"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "In RV_1_94_6 Agni is the presenter and purifier, while in RV_10_52_2 he sits impelled by the Maruts and all deities.",
+    "context_history": []
+  },
+  {
+    "id": "q54",
+    "question": "Compare the presentation of wealth given by Agni in Mandala 1 and Mandala 10.",
+    "expected_verse_ids": [
+      "RV_1_70_3",
+      "RV_10_80_2"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "RV_1_70_3 emphasizes wealth for the singer, while RV_10_80_2 praises the wood fueling Agni across both worlds.",
+    "context_history": []
+  },
+  {
+    "id": "q55",
+    "question": "Which verses across Mandalas 1 and 10 discuss the waters being released or leading worshippers?",
+    "expected_verse_ids": [
+      "RV_1_83_2",
+      "RV_10_30_11"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "The divine waters are described assisting pious offerings in RV_1_83_2 and RV_10_30_11.",
+    "context_history": []
+  },
+  {
+    "id": "q56",
+    "question": "Compare the cosmic origins described in Purusha Sukta (RV_10_90) and the Nasadiya Sukta (RV_10_129).",
+    "expected_verse_ids": [
+      "RV_10_90_1",
+      "RV_10_129_1"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "Purusha Sukta views creation from the sacrifice of a cosmic being [RV_10_90_1], while Nasadiya Sukta views it from a primal void beyond being and non-being [RV_10_129_1].",
+    "context_history": []
+  },
+  {
+    "id": "q57",
+    "question": "How is Indra's relationship with Soma/Indu portrayed in RV_10_144_6 versus his battle with Vritra in RV_10_50_2?",
+    "expected_verse_ids": [
+      "RV_10_50_2",
+      "RV_10_144_6"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "RV_10_144_6 attributes Indra's power to Indu, while RV_10_50_2 celebrates his martial might in battle.",
+    "context_history": []
+  },
+  {
+    "id": "q58",
+    "question": "Compare how Agni is praised as home of wealth in RV_1_96_7 and friend of Kanvas in RV_10_115_5.",
+    "expected_verse_ids": [
+      "RV_1_96_7",
+      "RV_10_115_5"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "RV_1_96_7 depicts Agni as the timeless mansion of wealth, whereas RV_10_115_5 presents him as a direct companion to the Kanva clan.",
+    "context_history": []
+  },
+  {
+    "id": "q59",
+    "question": "Which verses describe the holy devotion of priests in RV_1_151_7 versus RV_10_176_3?",
+    "expected_verse_ids": [
+      "RV_1_151_7",
+      "RV_10_176_3"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "Both verses depict devout priests offering holy sacrifice with reverence [RV_1_151_7, RV_10_176_3].",
+    "context_history": []
+  },
+  {
+    "id": "q60",
+    "question": "Compare the unity of gods under Law in RV_10_92_4 with the call for human concord in RV_10_191_2.",
+    "expected_verse_ids": [
+      "RV_10_92_4",
+      "RV_10_191_2"
+    ],
+    "question_type": "comparison",
+    "answerability": "answerable",
+    "reference_answer": "RV_10_92_4 describes the divine cosmic unity under Law, while RV_10_191_2 urges humans to unite their minds in assembly.",
+    "context_history": []
+  },
+  {
+    "id": "q61",
+    "question": "What about Indra?",
+    "expected_verse_ids": [
+      "RV_10_22_1",
+      "RV_10_108_3"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "Indra is renowned among folk and defended by his envoy Sarama [RV_10_22_1, RV_10_108_3].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "What is the role of Agni?"
+      },
+      {
+        "role": "assistant",
+        "content": "Agni is the priest of sacrifice [RV_1_1_1]."
+      }
+    ]
+  },
+  {
+    "id": "q62",
+    "question": "How is he described in that hymn?",
+    "expected_verse_ids": [
+      "RV_10_115_5"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "Agni is described as the best of Kanvas and friend who conquers foes [RV_10_115_5].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "What is said about Agni in Sukta 115?"
+      },
+      {
+        "role": "assistant",
+        "content": "Agni is mentioned in Sukta 115 [RV_10_115_5]."
+      }
+    ]
+  },
+  {
+    "id": "q63",
+    "question": "What about his relationship with Kanva?",
+    "expected_verse_ids": [
+      "RV_10_115_5"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "Agni is a close friend and protector of the Kanva singers [RV_10_115_5].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "Who is Agni's friend?"
+      },
+      {
+        "role": "assistant",
+        "content": "Agni is the friend of Kanvas [RV_10_115_5]."
+      }
+    ]
+  },
+  {
+    "id": "q64",
+    "question": "What about the waters?",
+    "expected_verse_ids": [
+      "RV_1_83_2",
+      "RV_10_30_11"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "The waters flow forth to bless the holy sacrifice [RV_1_83_2, RV_10_30_11].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "How is sacrifice described?"
+      },
+      {
+        "role": "assistant",
+        "content": "Sacrifice is offered with holy worship [RV_1_151_7]."
+      }
+    ]
+  },
+  {
+    "id": "q65",
+    "question": "What is said about Indra in that context?",
+    "expected_verse_ids": [
+      "RV_10_144_6"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "Indra gains strength from Indu to repel all treachery [RV_10_144_6].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "What is Indu's power?"
+      },
+      {
+        "role": "assistant",
+        "content": "Indu gives power to Indra [RV_10_144_6]."
+      }
+    ]
+  },
+  {
+    "id": "q66",
+    "question": "And how is unity described?",
+    "expected_verse_ids": [
+      "RV_10_92_4"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "Unity is described through the cosmic net of Law where all gods meet [RV_10_92_4].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "Are the gods united in law?"
+      },
+      {
+        "role": "assistant",
+        "content": "Varuna and Mitra meet in law [RV_10_92_4]."
+      }
+    ]
+  },
+  {
+    "id": "q67",
+    "question": "What does the next verse say?",
+    "expected_verse_ids": [
+      "RV_1_1_2"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "Verse 2 says Agni is worthy to be praised by living as by ancient seers [RV_1_1_2].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "What does the first verse of the Rig Veda say?"
+      },
+      {
+        "role": "assistant",
+        "content": "I laud Agni, the chosen Priest, God, minister of sacrifice [RV_1_1_1]."
+      }
+    ]
+  },
+  {
+    "id": "q68",
+    "question": "What about the verse after that?",
+    "expected_verse_ids": [
+      "RV_1_1_3"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "Verse 3 says through Agni man obtaineth wealth waxing day by day [RV_1_1_3].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "What does the second verse say?"
+      },
+      {
+        "role": "assistant",
+        "content": "Agni is worthy to be praised by ancient and living seers [RV_1_1_2]."
+      }
+    ]
+  },
+  {
+    "id": "q69",
+    "question": "How does he conquer the dragon?",
+    "expected_verse_ids": [
+      "RV_1_32_1",
+      "RV_1_32_2"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "Indra smote the dragon with his lightning vajra and cleared channels for waters [RV_1_32_1].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "Who is the Thunder-wielder?"
+      },
+      {
+        "role": "assistant",
+        "content": "Indra is the thunder-wielder [RV_1_32_1]."
+      }
+    ]
+  },
+  {
+    "id": "q70",
+    "question": "What about their accord in assembly?",
+    "expected_verse_ids": [
+      "RV_10_191_2",
+      "RV_10_191_3"
+    ],
+    "question_type": "conversational_followup",
+    "answerability": "answerable",
+    "reference_answer": "They are called to assemble and let their thoughts and prayers agree [RV_10_191_2, RV_10_191_3].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "What is the message of the final hymn?"
+      },
+      {
+        "role": "assistant",
+        "content": "The final hymn urges unity and harmony [RV_10_191_1]."
+      }
+    ]
+  },
+  {
+    "id": "q71",
+    "question": "What does Rig Veda Mandala 11 say about Agni?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q72",
+    "question": "What is written in the Roman Empire records about the Rig Veda?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q73",
+    "question": "What does Rig Veda Mandala 12 say about the solar eclipse?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q74",
+    "question": "What are the rules of modern quantum physics in Mandala 1?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q75",
+    "question": "What is the capital city of France according to the Rig Veda?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q76",
+    "question": "How does modern photosynthesis work according to Rig Veda Mandala 8?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q77",
+    "question": "How does the United States government regulate the Rig Veda?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q78",
+    "question": "What did Shakespeare write about Mandala 10?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q79",
+    "question": "What does Newtons law of gravity state in Rig Veda Mandala 4?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "q80",
+    "question": "How is bitcoin mining explained in Rig Veda Mandala 1?",
+    "expected_verse_ids": [],
+    "question_type": "insufficient_evidence",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "vw01",
+    "question": "What does the Rig Veda say about overcoming adversity and crossing through grief and troubles?",
+    "expected_verse_ids": [
+      "RV_1_99_1",
+      "RV_10_53_8",
+      "RV_8_48_3"
+    ],
+    "question_type": "thematic",
+    "life_theme": "adversity_resilience",
+    "answerability": "answerable",
+    "reference_answer": "Rig Veda 1.99.1 prays to Agni to carry worshippers through all troubles and grief as in a boat across a river [RV_1_99_1], while 10.53.8 urges companions to hold fast to each other and cross the flood to auspicious powers [RV_10_53_8].",
+    "context_history": []
+  },
+  {
+    "id": "vw02",
+    "question": "What about the next verse?",
+    "expected_verse_ids": [
+      "RV_10_53_9"
+    ],
+    "question_type": "conversational_followup",
+    "life_theme": "adversity_resilience",
+    "answerability": "answerable",
+    "reference_answer": "Following RV_10_53_8, RV_10_53_9 invokes Tvashtar, most deft of workmen, knowing cosmic forms and bearing sacred bowls [RV_10_53_9].",
+    "context_history": [
+      {
+        "role": "user",
+        "content": "What does Rig Veda 10.53.8 say about crossing the river of difficulty together?"
+      },
+      {
+        "role": "assistant",
+        "content": "In [RV_10_53_8], companions are urged to hold fast each other, keep themselves up, and cross the river Asmanvati to auspicious powers."
+      }
+    ]
+  },
+  {
+    "id": "vw03",
+    "question": "How does the Rig Veda describe knowledge, wise speech, and learning among friends?",
+    "expected_verse_ids": [
+      "RV_10_71_1",
+      "RV_10_71_2",
+      "RV_3_62_10",
+      "RV_1_164_46"
+    ],
+    "question_type": "thematic",
+    "life_theme": "knowledge_learning",
+    "answerability": "answerable",
+    "reference_answer": "Rig Veda 10.71.2 describes how the wise in spirit fashion language like cleansing corn-flour in a sieve, recognizing marks of friendship in speech [RV_10_71_2], and 3.62.10 meditates on the desirable light of Savitar to inspire pious thought [RV_3_62_10].",
+    "context_history": []
+  },
+  {
+    "id": "vw04",
+    "question": "What do the hymns teach about cooperation, unity of mind, and shared purpose in an assembly?",
+    "expected_verse_ids": [
+      "RV_10_191_2",
+      "RV_10_191_3",
+      "RV_10_191_4"
+    ],
+    "question_type": "thematic",
+    "life_theme": "cooperation",
+    "answerability": "answerable",
+    "reference_answer": "The Samjnana Sukta (10.191.2–4) calls people to assemble, speak together, unite their minds and resolve, and share a common purpose so that all may happily agree [RV_10_191_2] [RV_10_191_3] [RV_10_191_4].",
+    "context_history": []
+  },
+  {
+    "id": "vw05",
+    "question": "How is leadership, protective governance, and guiding the people portrayed in the Rig Veda?",
+    "expected_verse_ids": [
+      "RV_2_12_1",
+      "RV_2_23_1",
+      "RV_4_50_8",
+      "RV_10_173_1"
+    ],
+    "question_type": "thematic",
+    "life_theme": "leadership",
+    "answerability": "answerable",
+    "reference_answer": "Rig Veda 2.23.1 invokes Brahmanaspati as chief leader of the bands and sage of sages [RV_2_23_1], while 4.50.8 describes a prosperous ruler whose subjects willingly pay homage [RV_4_50_8].",
+    "context_history": []
+  },
+  {
+    "id": "vw06",
+    "question": "What does the Rig Veda say about self-discipline, avoiding gambling, and honest cultivation?",
+    "expected_verse_ids": [
+      "RV_10_34_13",
+      "RV_7_86_3",
+      "RV_7_89_5"
+    ],
+    "question_type": "thematic",
+    "life_theme": "discipline_order",
+    "answerability": "answerable",
+    "reference_answer": "In the Gambler Hymn, Rig Veda 10.34.13 admonishes: Play not with dice: no, cultivate thy corn-land. Enjoy the gain, and deem that wealth sufficient [RV_10_34_13].",
+    "context_history": []
+  },
+  {
+    "id": "vw07",
+    "question": "What does the Rig Veda say about ethics, generosity to the poor, and the changing wheel of fortune?",
+    "expected_verse_ids": [
+      "RV_10_117_1",
+      "RV_10_117_5",
+      "RV_10_117_6"
+    ],
+    "question_type": "thematic",
+    "life_theme": "ethics_conduct",
+    "answerability": "answerable",
+    "reference_answer": "Rig Veda 10.117.5 urges the rich to satisfy the poor implorer because riches roll like chariot wheels from one to another [RV_10_117_5], and 10.117.6 warns that one who feeds no friend or comrade eats his sin alone [RV_10_117_6].",
+    "context_history": []
+  },
+  {
+    "id": "vw08",
+    "question": "How does the Rig Veda express cosmic uncertainty and skepticism about the origin of creation?",
+    "expected_verse_ids": [
+      "RV_10_129_1",
+      "RV_10_129_6",
+      "RV_10_129_7"
+    ],
+    "question_type": "thematic",
+    "life_theme": "uncertainty",
+    "answerability": "answerable",
+    "reference_answer": "The Nasadiya Sukta (10.129.1, 10.129.6–7) questions what covered the void before existence and asks who verily knows whence creation came, concluding that even its highest overseer in heaven perchance knows or knows not [RV_10_129_1] [RV_10_129_6] [RV_10_129_7].",
+    "context_history": []
+  },
+  {
+    "id": "vw09",
+    "question": "What prayers for well-being, auspicious thoughts, and holistic peace appear in the Rig Veda?",
+    "expected_verse_ids": [
+      "RV_1_89_1",
+      "RV_1_89_8",
+      "RV_7_59_12"
+    ],
+    "question_type": "thematic",
+    "life_theme": "well_being",
+    "answerability": "answerable",
+    "reference_answer": "Rig Veda 1.89.1 prays that auspicious powers come from every side [RV_1_89_1], and 1.89.8 prays that with ears we listen to what is good and with eyes see what is good [RV_1_89_8].",
+    "context_history": []
+  },
+  {
+    "id": "vw10",
+    "question": "How does the Rig Veda celebrate nature, rivers, rain, and the forest goddess Aranyani?",
+    "expected_verse_ids": [
+      "RV_10_146_1",
+      "RV_5_83_1",
+      "RV_6_61_2",
+      "RV_3_33_1"
+    ],
+    "question_type": "thematic",
+    "life_theme": "nature",
+    "answerability": "answerable",
+    "reference_answer": "Rig Veda 10.146.1 addresses Aranyani, Goddess of wild and forest [RV_10_146_1], 5.83.1 praises Parjanya who brings rain [RV_5_83_1], and 6.61.2 and 3.33.1 celebrate the mighty rushing rivers [RV_6_61_2] [RV_3_33_1].",
+    "context_history": []
+  },
+  {
+    "id": "vw11",
+    "question": "What clinically validated psychiatric medication or CBT protocol does the Rig Veda prescribe for major depressive disorder?",
+    "expected_verse_ids": [],
+    "question_type": "unanswerable",
+    "life_theme": "well_being",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  },
+  {
+    "id": "vw12",
+    "question": "Does the Rig Veda provide a scientifically proven vaccine or antibiotic cure for viral pneumonia?",
+    "expected_verse_ids": [],
+    "question_type": "unanswerable",
+    "life_theme": "well_being",
+    "answerability": "unanswerable",
+    "reference_answer": "I could not find sufficient evidence in the selected English translation corpus to answer this reliably.",
+    "context_history": []
+  }
+]

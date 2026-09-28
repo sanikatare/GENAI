@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "source_id": "griffith_sacred_texts",
+      "source_name": "Sacred Texts Archive",
+      "base_url": "https://sacred-texts.com/hin/rigveda/",
+      "translator": "Ralph T. H. Griffith",
+      "edition_year": 1896,
+      "language": "English",
+      "format": "HTML",
+      "mandalas": [1, 10],
+      "role": "primary",
+      "verification_status": "pending"
+    },
+    {
+      "source_id": "griffith_wara",
+      "source_name": "texts.wara.in",
+      "base_url": "https://texts.wara.in/vedas/rigveda/",
+      "translator": "Ralph T. H. Griffith",
+      "edition_year": 1896,
+      "language": "English",
+      "format": "HTML",
+      "mandalas": [1, 10],
+      "role": "backup_verification_only",
+      "verification_status": "pending"
+    }
+  ]
+}
