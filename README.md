@@ -1,9 +1,5 @@
 # VedaWise: Explainable AI for Life-Oriented Knowledge Discovery from the Rig Veda
 
-**B.Tech Final-Year Research Project & Working Conversational Hybrid RAG Prototype over Rig Veda Mandalas 1–10**
-
----
-
 ## 1. Core Research Question
 
 > *Can an explainable hybrid RAG system reliably retrieve and contextualize life-oriented themes from the Rig Veda while minimizing hallucinations and unsupported interpretations?*
