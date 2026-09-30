@@ -158,6 +158,23 @@ export interface EpistemicLayers {
   unsupported_claim: string;
 }
 
+export interface EpistemicDistinction {
+  direct: string;
+  inferred: string;
+  contextual: string;
+}
+
+export interface StructuredTeacherAnswer {
+  direct_answer: string;
+  explanation: string;
+  context: string | null;
+  textual_basis: string;
+  references: string;
+  is_indirect_connection: boolean;
+  interpretation_type?: 'direct' | 'inferred' | 'contextual';
+  epistemic_distinction?: EpistemicDistinction;
+}
+
 export type LifeThemeId =
   | 'adversity_resilience'
   | 'knowledge_learning'
@@ -249,6 +266,7 @@ export interface ExplainabilityValidation {
 
 export interface ChatResponseData {
   answer: string;
+  structured_answer?: StructuredTeacherAnswer;
   epistemic_layers?: EpistemicLayers;
   citations: string[];
   supporting_verses: SupportingVerseOut[];

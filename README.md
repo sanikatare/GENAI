@@ -8,7 +8,8 @@
 
 **VedaWise** strictly enforces the boundary between ancient liturgical poetry and modern empirical science:
 - The system **never** claims that the Rig Veda provides medical, clinical, psychological, or scientifically validated solutions to modern problems.
-- Every grounded response separates outputs into **4 explicit epistemic layers**:
+- Every grounded teacher response follows the **5-part VedaWise structure** (`Answer`, `Explanation`, `Context`, `Textual basis`, `References`) and explicitly distinguishes between **Direct Meaning**, **Inferred Principle**, and **Contextual Application**.
+- Every response is paired with **4 explicit epistemic layers** in the Explainable AI (XAI) panel:
   1. **Textual Evidence (`Direct`)** — What the retrieved Rig Veda verse actually says, with verbatim translation, Sanskrit, transliteration, and `[RV_M_S_V]` citations.
   2. **Theme (`Thematic`)** — The life-oriented Vedic motif present in the verse (e.g., *Saṃjñāna* for cooperation, *Tarati Duritā* for crossing adversity, *Ṛta* for cosmic/moral order).
   3. **Contemporary Connection (`Interpretive`)** — A clearly labeled modern philosophical or reflective analogy, never presented as direct scriptural fact.

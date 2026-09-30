@@ -23,9 +23,11 @@ const KB_DIR = path.join(DATA_DIR, 'knowledge_base');
 const METADATA_JSON_PATH = path.join(KB_DIR, 'metadata.json');
 const COMPLETE_CORPUS_PATH = path.join(KB_DIR, 'complete_rigveda_corpus.json');
 const COMPLETE_CORPUS_GZ_PATH = path.join(KB_DIR, 'complete_rigveda_corpus.json.gz');
+const COMPLETE_CORPUS_B64_PATH = path.join(KB_DIR, 'complete_rigveda_corpus.json.gz.b64');
 const EMBEDDINGS_NPY_PATH = path.join(KB_DIR, 'embeddings.npy');
 const FAISS_INDEX_PATH = path.join(KB_DIR, 'faiss.index');
 const FAISS_INT8_GZ_PATH = path.join(KB_DIR, 'faiss.int8.bin.gz');
+const FAISS_INT8_B64_PATH = path.join(KB_DIR, 'faiss.int8.bin.gz.b64');
 const KB_CONFIG_PATH = path.join(KB_DIR, 'kb_config.json');
 const EVALUATION_REPORT_PATH = path.join(DATA_DIR, 'logs', 'evaluation_results.json');
 const BENCHMARK_QUESTIONS_PATH = path.join(DATA_DIR, 'evaluation', 'benchmark_questions.json');
@@ -196,27 +198,112 @@ export const MANDALA_CATALOG_INFO: Record<
   },
 };
 
-const GROUNDED_SYSTEM_PROMPT = `You are a scholarly, objective question-answering assistant working ONLY with the provided English translation evidence from the Rig Veda corpus (Mandala 1 through Mandala 10, Ralph T. H. Griffith, 1896).
+export const GROUNDED_SYSTEM_PROMPT = `You are VedaWise, an AI assistant designed to answer questions about ancient Indian texts, scriptures, philosophy, culture, and related knowledge, grounded strictly in the provided English translation corpus of the Rig Veda (Mandalas 1–10).
 
-This is an educational/research RAG system. You are not an official scholarly authority on the Rig Veda.
+Your priority is to provide answers that are FORMAL, SIMPLE, CLEAR, and EASY FOR A NORMAL USER TO UNDERSTAND.
 
-Your task is to answer the user's question strictly using ONLY the supplied evidence passages and return a structured JSON object with exactly four string fields:
-- "textual_evidence"
-- "theme"
-- "contemporary_connection"
-- "unsupported_claim"
+Do NOT make the answer look like a research paper or technical database output.
 
-CRITICAL EPISTEMIC & GROUNDING RULES:
-1. Generate your response ONLY from the retrieved verse evidence supplied to you. Do NOT rely on outside knowledge.
-2. Every textual claim in "textual_evidence" MUST explicitly cite an actual retrieved verse ID in brackets (e.g., [RV_1_1_1] or [RV_10_191_2]) from the supplied evidence.
-3. Do NOT invent verses, Sanskrit text, translations, verse IDs, historical facts, or medical/scientific claims.
-4. Keep the 4-layer epistemic distinction strict:
-   - "textual_evidence": State ONLY what the retrieved verse translation literally says, quoting or closely paraphrasing the supplied English translation and citing [RV_M_S_V] for every textual claim.
-   - "theme": State the Vedic or life-oriented theme supported by the retrieved verse(s), citing [RV_M_S_V].
-   - "contemporary_connection": Provide a clearly labeled interpretive reflection grounded in [RV_M_S_V] (explicitly framed as a reflective interpretation, not scriptural fact or modern prescription).
-   - "unsupported_claim": State clearly what the retrieved Rig Veda evidence cannot establish (including that it cannot establish modern medical, psychological, clinical, or empirically validated scientific claims or unattested historical facts).
-5. If the provided evidence is insufficient or off-topic to answer reliably, set "textual_evidence" to the exact string:
-   "I could not find sufficient evidence in the selected English translation corpus to answer this reliably."`;
+ANSWER STRUCTURE:
+
+1. DIRECT ANSWER ("direct_answer")
+Start with a short, clear answer (2–4 sentences) to the user's exact question.
+Answer the question in normal language before giving any supporting details.
+Do NOT immediately produce category headers or Sanskrit labels such as "Leadership & Responsibility (Nīti & Gopā)...".
+Do NOT interrupt the opening answer with raw bracketed verse codes.
+
+2. SIMPLE EXPLANATION ("explanation")
+Explain the meaning in 1–3 short paragraphs using simple but formal language.
+Avoid unnecessary Sanskrit terminology, academic jargon, and complicated sentences.
+If a Sanskrit term is important, explain its meaning immediately in simple language.
+Explain that the specific verses describe these qualities in their own historical and religious context.
+
+3. CONTEXT / INDIRECT CONNECTION ("context")
+If the text does not directly answer the exact wording of the user's question, do NOT force a direct claim.
+Instead, clearly say that the idea can be understood indirectly, by reasonable inference, or contextually from the relevant passage.
+Then explain the connection in simple language.
+For example:
+"Although the Rig Veda does not state this idea in exactly these modern terms, the passage can be understood as reflecting..."
+This distinction between DIRECT textual evidence, REASONABLE INFERENCE, and CONTEXTUAL interpretation is important.
+Only include this section when the connection is indirect, inferred, or contextual (return "" when the passage directly and literally answers a specific scriptural question).
+
+4. TEXTUAL EVIDENCE ("textual_basis")
+Only after explaining the answer, provide the relevant verse/reference as supporting evidence (citing the retrieved [RV_M_S_V] verse IDs).
+Do not make long quotations the center of the answer.
+Use a short quotation only when it genuinely helps.
+Otherwise, summarize what the verse says.
+
+5. REFERENCES ("references")
+Keep references/citations compact and unobtrusive.
+References should support the answer, not interrupt every sentence.
+If multiple references support the same idea, group them together (e.g., "Rig Veda 10.191.2–4 [RV_10_191_2], [RV_10_191_3], [RV_10_191_4]").
+
+IMPORTANT CONTENT RULES:
+
+- Never invent what a scripture says.
+- Do not present a modern interpretation as if it were the literal meaning of the original text.
+- Strictly distinguish and classify ("interpretation_type"):
+  a) What the text directly says ("direct"): Literal statements, deities, rituals, or imagery explicitly stated in the original verse.
+  b) What can reasonably be inferred from it ("inferred"): Broader philosophical, ethical, or thematic ideas that follow reasonably from the passage when the user's question is broader than a single literal statement.
+  c) A modern/contextual interpretation ("contextual"): Relating or applying the ancient passage to contemporary daily life, modern habits, or personal reflection.
+- If the question is broader than the exact passage, explain the relevant connection rather than pretending there is a direct statement.
+- If there is insufficient textual evidence, say so clearly by setting "direct_answer" and "textual_basis" to:
+  "I could not find sufficient evidence in the selected English translation corpus to answer this reliably."
+- Prefer accuracy and clarity over excessive detail.
+
+RETRIEVAL AND CONTEXT RULE:
+
+When retrieved passages are relevant but do not directly answer the user's question, use them as contextual evidence rather than forcing them into a direct answer.
+
+For example, if the user asks:
+"What does the Rig Veda say about leadership in daily life?"
+
+Do NOT immediately produce:
+"Leadership & Responsibility (Nīti & Gopā)..."
+
+Instead, explain the idea in ordinary language first, such as:
+"The Rig Veda presents leadership in terms of guidance, protection, responsibility, and earning the trust of the community. These ideas suggest that a leader's role is not only to hold authority but also to provide guidance and protection."
+
+Then explain that the specific verses describe these qualities in their own historical and religious context.
+
+The user should understand the answer even if they do not open a single citation.
+
+Do not use modern concepts such as "management," "corporate leadership," "democratic leadership," "team management," etc. as though they were explicitly stated in the ancient text. If making a modern connection, label it clearly as a modern interpretation or contextual application.
+
+WRITING STYLE:
+
+- Formal but natural
+- Simple vocabulary
+- Short paragraphs
+- Clear logical flow
+- No unnecessary repetition
+- No excessive headings
+- No excessive bullet points
+- No overly academic language
+- No long blocks of quoted scripture
+- No unnecessary meta-commentary
+- Do not assume the user knows Sanskrit, Vedic terminology, or the internal structure of the project.
+
+The final answer should feel like a knowledgeable teacher explaining the subject to an educated general reader.
+
+IDEAL FORMAT:
+
+Answer:
+[2–4 sentences directly answering the question.]
+
+Explanation:
+[Simple explanation of the idea and its meaning.]
+
+Context:
+[Only include this section when the connection is indirect/contextual.]
+
+Textual basis:
+[Brief explanation or short quotation from the relevant passage.]
+
+References:
+[Compact references.]
+
+Keep the overall answer concise unless the user explicitly asks for a detailed explanation.`;
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -361,6 +448,23 @@ export interface EpistemicLayers {
   unsupported_claim: string;
 }
 
+export interface EpistemicDistinction {
+  direct: string;
+  inferred: string;
+  contextual: string;
+}
+
+export interface StructuredTeacherAnswer {
+  direct_answer: string;
+  explanation: string;
+  context: string | null;
+  textual_basis: string;
+  references: string;
+  is_indirect_connection: boolean;
+  interpretation_type?: 'direct' | 'inferred' | 'contextual';
+  epistemic_distinction?: EpistemicDistinction;
+}
+
 export type LifeThemeId =
   | 'adversity_resilience'
   | 'knowledge_learning'
@@ -393,10 +497,10 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
       'Metaphors of crossing turbulent waters in a boat, mutual support amidst difficulty, and seeking light through darkness.',
     keywords: [
       'adversity', 'resilience', 'hardship', 'trouble', 'troubles', 'grief', 'difficulty',
-      'peril', 'obstacle', 'crisis', 'suffering', 'overcome', 'cross', 'endurance', 'courage',
+      'peril', 'obstacle', 'crisis', 'suffering', 'overcome', 'overcoming', 'endurance',
     ],
     expansion_terms: [
-      'troubles', 'grief', 'boat', 'river', 'asmanvati', 'hold', 'fast', 'pass', 'flood', 'auspicious', 'light', 'enemy',
+      'troubles', 'grief', 'boat', 'river', 'hold', 'pass', 'flood', 'safety', 'help',
     ],
     canonical_verses: ['RV_10_53_8', 'RV_1_99_1', 'RV_8_48_3', 'RV_6_47_11'],
     contemporary_reflection:
@@ -411,12 +515,11 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
     description:
       'Cultivation of discernment, refinement of language among the wise, and inquiry into the unity underlying diverse names.',
     keywords: [
-      'knowledge', 'learning', 'learn', 'teach', 'teaching', 'wisdom', 'wise', 'education',
-      'intellect', 'speech', 'language', 'thought', 'study', 'inquiry', 'truth', 'understanding',
-      'mind', 'meditate',
+      'knowledge', 'learning', 'learn', 'teach', 'teaching', 'education',
+      'intellect', 'study', 'understanding', 'wise speech',
     ],
     expansion_terms: [
-      'wise', 'spirit', 'language', 'corn', 'flour', 'cribble', 'speech', 'savita', 'light', 'sages', 'one',
+      'wise', 'spirit', 'language', 'speech', 'thought', 'sages', 'meditate', 'light', 'friends',
     ],
     canonical_verses: ['RV_10_71_2', 'RV_10_71_1', 'RV_3_62_10', 'RV_1_164_46'],
     contemporary_reflection:
@@ -431,8 +534,8 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
     description:
       'Calls for collective concord, shared deliberation in assembly, and unity of heart and mind.',
     keywords: [
-      'cooperation', 'unity', 'harmony', 'together', 'teamwork', 'community', 'assembly',
-      'agreement', 'collective', 'united', 'concord', 'consensus', 'fellowship', 'solidarity',
+      'cooperation', 'unity', 'harmony', 'teamwork', 'assembly',
+      'agreement', 'collective', 'united', 'concord', 'consensus', 'solidarity', 'shared purpose',
     ],
     expansion_terms: [
       'assemble', 'speak', 'together', 'minds', 'accord', 'common', 'purpose', 'united', 'thoughts', 'agree',
@@ -450,8 +553,8 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
     description:
       'Portrayals of wise guidance, protecting the community, leading with counsel, and earning willing respect.',
     keywords: [
-      'leadership', 'leader', 'governance', 'king', 'ruler', 'guide', 'responsibility',
-      'authority', 'stewardship', 'protection', 'duty', 'statesmanship', 'command',
+      'leadership', 'leader', 'governance', 'ruler', 'responsibility',
+      'authority', 'stewardship', 'statesmanship',
     ],
     expansion_terms: [
       'chief', 'leader', 'sage', 'prosperous', 'subjects', 'homage', 'first', 'protector', 'firm', 'kingdom',
@@ -469,11 +572,11 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
     description:
       'Observance of cosmic and moral regularity (Ṛta), honest labour over reckless gambling, and self-restraint.',
     keywords: [
-      'discipline', 'order', 'rta', 'restraint', 'habit', 'diligence', 'work', 'gambling',
-      'dice', 'self-control', 'law', 'regularity', 'duty', 'cultivate', 'focus',
+      'discipline', 'self-discipline', 'restraint', 'habit', 'diligence', 'gambling',
+      'dice', 'self-control', 'regularity', 'cultivate',
     ],
     expansion_terms: [
-      'play', 'dice', 'cultivate', 'corn', 'wealth', 'sufficient', 'law', 'varuna', 'vows', 'ordinances',
+      'play', 'dice', 'cultivate', 'corn', 'wealth', 'sufficient', 'varuna', 'vows', 'ordinances',
     ],
     canonical_verses: ['RV_10_34_13', 'RV_7_86_3', 'RV_7_89_5', 'RV_1_1_8'],
     contemporary_reflection:
@@ -488,11 +591,11 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
     description:
       'Teachings on sharing wealth with the needy, recognizing the changing wheel of fortune, truthfulness, and moral introspection.',
     keywords: [
-      'ethics', 'conduct', 'morality', 'generosity', 'charity', 'poor', 'rich', 'hunger',
-      'selfishness', 'sin', 'forgiveness', 'honesty', 'compassion', 'kindness', 'sharing',
+      'ethics', 'conduct', 'morality', 'generosity', 'charity', 'hunger',
+      'selfishness', 'compassion', 'kindness', 'sharing', 'wheel of fortune',
     ],
     expansion_terms: [
-      'hunger', 'rich', 'satisfy', 'poor', 'implorer', 'wheels', 'cars', 'rolling', 'food', 'friend', 'offence', 'varuna',
+      'hunger', 'rich', 'satisfy', 'poor', 'wheels', 'food', 'friend', 'kindness', 'sin',
     ],
     canonical_verses: ['RV_10_117_5', 'RV_10_117_1', 'RV_10_117_6', 'RV_7_86_3', 'RV_7_86_5'],
     contemporary_reflection:
@@ -507,8 +610,8 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
     description:
       'Philosophical humility before the unknown, questioning the ultimate origin of existence without dogmatic certainty.',
     keywords: [
-      'uncertainty', 'doubt', 'unknown', 'mystery', 'skepticism', 'creation', 'origin',
-      'existence', 'non-existent', 'philosophical', 'questioning', 'ambiguity', 'wonder',
+      'uncertainty', 'doubt', 'unknown', 'mystery', 'skepticism',
+      'non-existent', 'questioning', 'ambiguity', 'wonder',
     ],
     expansion_terms: [
       'non-existent', 'existent', 'realm', 'unfathomed', 'depth', 'declares', 'whence', 'creation', 'knows', 'perchance',
@@ -526,11 +629,11 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
     description:
       'Prayers for receptive senses, auspicious thoughts, peaceful coexistence, and fullness of life.',
     keywords: [
-      'well-being', 'wellbeing', 'peace', 'health', 'vitality', 'flourishing', 'happiness',
-      'longevity', 'auspicious', 'harmony', 'strength', 'serenity',
+      'well-being', 'wellbeing', 'vitality', 'flourishing', 'happiness',
+      'longevity', 'auspicious', 'serenity', 'peaceful living', 'holistic peace',
     ],
     expansion_terms: [
-      'auspicious', 'ears', 'listen', 'good', 'eyes', 'see', 'limbs', 'bodies', 'life', 'tryambaka', 'fragrant',
+      'auspicious', 'ears', 'listen', 'good', 'eyes', 'see', 'limbs', 'bodies', 'peace', 'life',
     ],
     canonical_verses: ['RV_1_89_8', 'RV_1_89_1', 'RV_7_59_12', 'RV_10_18_2'],
     contemporary_reflection:
@@ -545,8 +648,8 @@ export const LIFE_THEMES: Record<LifeThemeId, LifeThemeDefinition> = {
     description:
       'Poetic celebration of rushing rivers, life-giving rain (Parjanya), radiant dawn (Uṣas), and the unspoiled forest (Araṇyānī).',
     keywords: [
-      'nature', 'ecology', 'environment', 'river', 'rivers', 'forest', 'trees', 'rain',
-      'waters', 'dawn', 'earth', 'sky', 'wind', 'animals', 'birds', 'wilderness', 'aranyani',
+      'nature', 'ecology', 'environment', 'forest', 'trees',
+      'wilderness', 'aranyani',
     ],
     expansion_terms: [
       'goddess', 'wild', 'forest', 'aranyani', 'village', 'parjanya', 'rain', 'rivers', 'mountains', 'waves', 'sarasvati',
@@ -582,6 +685,45 @@ export interface ChatMessage {
 // ---------------------------------------------------------------------------
 // Text Preprocessing & BM25 + Dense Hybrid Retriever
 // ---------------------------------------------------------------------------
+
+export function cleanCorpusText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/by\s+H\.\s*H\.\s*Wilson\s*\|\s*1866[^.]*(?:ISBN-13:\s*\d+)?/gi, '')
+    .replace(/\bplural\s+ugh/gi, 'plough')
+    .replace(/\bplural\s+nts/gi, 'plants')
+    .replace(/\bplural\s+nt/gi, 'plant')
+    .replace(/\bplural\s+ace/gi, 'place')
+    .replace(/\bplural\s+eas/gi, 'pleas')
+    .replace(/\bplural\s+ent/gi, 'plent')
+    .replace(/([A-Za-z\u00C0-\u024F\u1E00-\u1EFF])\(/g, '$1 (')
+    .replace(/\)([A-Za-z\u00C0-\u024F\u1E00-\u1EFF])/g, ') $1')
+    .replace(/,([A-Za-z\u00C0-\u024F\u1E00-\u1EFF])/g, ', $1')
+    .replace(/;([A-Za-z\u00C0-\u024F\u1E00-\u1EFF])/g, '; $1')
+    .replace(/\bofthe\b/gi, 'of the')
+    .replace(/\binthe\b/gi, 'in the')
+    .replace(/\btothe\b/gi, 'to the')
+    .replace(/\bbythe\b/gi, 'by the')
+    .replace(/\bforthe\b/gi, 'for the')
+    .replace(/\bandthe\b/gi, 'and the')
+    .replace(/\bwitha\b/gi, 'with a')
+    .replace(/\bwiḥ\b/g, 'with')
+    .replace(/\buniversalmedicine\b/gi, 'universal medicine')
+    .replace(/\bmoveas\b/gi, 'move as')
+    .replace(/\bIndraand\b/g, 'Indra and')
+    .replace(/\bIndraaccepted\b/g, 'Indra accepted')
+    .replace(/\bAśvatthahas\b/g, 'Aśvattha has')
+    .replace(/\bPāyuten\b/g, 'Pāyu ten')
+    .replace(/\bthewise\b/gi, 'the wise')
+    .replace(/\butteraloud\b/gi, 'utter aloud')
+    .replace(/\bmutuallyat\b/gi, 'mutually at')
+    .replace(/\binmartial\b/gi, 'in martial')
+    .replace(/\btherākṣasas\b/gi, 'the rākṣasas')
+    .replace(/\swithThe\b/g, ' with the')
+    .replace(/\bwithThe\b/gi, 'with the')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 const SANSKRIT_NORMALIZATION_MAP: Record<string, string> = {
   ushas: 'usas',
@@ -630,68 +772,79 @@ const STOPWORDS = new Set([
   'say', 'said', 'describe', 'described', 'role', 'hymn', 'verse', 'mandala',
   'sukta', 'unto', 'thee', 'thou', 'thy', 'thine', 'ye', 'you', 'he', 'him',
   'his', 'they', 'them', 'their', 'us', 'our', 'we', 'me', 'my', 'hath', 'hast',
+  'daily', 'everyday', 'modern', 'today', 'contemporary', 'current', 'nowadays',
+  'apply', 'application', 'relevance', 'relevant', 'relate', 'relates', 'related',
+  'lesson', 'lessons', 'teach', 'teaches', 'mean', 'means', 'happen', 'happens',
+  'explain', 'explains', 'state', 'states',
 ]);
 
 const SEMANTIC_SYNONYMS: Record<string, string[]> = {
-  agni: ['fire', 'priest', 'hotar', 'sacrifice', 'flame', 'messenger', 'altar', 'oblation', 'invoker', 'angiras', 'household', 'presenter', 'purifier', 'laud', 'chosen', 'lavishest'],
-  fire: ['agni', 'flame', 'blaze', 'burn', 'smoke', 'wood', 'sacrifice', 'radiant', 'laud', 'chosen', 'priest', 'minister', 'hotar'],
-  priestly: ['priest', 'hotar', 'minister', 'presenter', 'invoker', 'director', 'purifier', 'skilled', 'sacrificing'],
-  oblation: ['sacrifice', 'minister', 'priest', 'hotar', 'presenter', 'laud', 'chosen', 'bearer'],
-  indra: ['thunderbolt', 'bolt', 'vritra', 'vrtra', 'dragon', 'serpent', 'soma', 'warrior', 'slayer', 'waters', 'maruts', 'maghavan', 'hero', 'famed', 'renowned', 'mitra', 'manly', 'deeds'],
-  vritra: ['indra', 'dragon', 'serpent', 'cloud', 'waters', 'slew', 'thunderbolt', 'foe', 'mountain', 'first', 'manly', 'deeds', 'disclosed', 'cleft', 'channels', 'torrents', 'tvastar'],
-  vrtra: ['indra', 'dragon', 'slew', 'mountain', 'waters', 'manly', 'deeds', 'disclosed', 'channels', 'torrents'],
-  dragon: ['vritra', 'vrtra', 'indra', 'slew', 'mountain', 'waters', 'thunder', 'wielder', 'manly', 'deeds', 'disclosed', 'cleft', 'channels', 'torrents', 'lying'],
-  caverns: ['channels', 'torrents', 'disclosed', 'slew', 'dragon', 'mountain', 'glided', 'kine'],
-  imprisoned: ['disclosed', 'slew', 'dragon', 'cleft', 'channels', 'mountain', 'torrents', 'glided'],
-  soma: ['indu', 'juice', 'draught', 'drop', 'drops', 'pressed', 'purified', 'drink', 'immortal', 'pavamana', 'filter', 'steeds', 'plants', 'wise', 'preeminent', 'wisdom', 'straightest', 'forefathers', 'insight', 'mortals'],
-  draught: ['soma', 'indu', 'preeminent', 'wisdom', 'straightest', 'leader', 'forefathers', 'guidance', 'insight', 'mortals'],
-  invigorating: ['soma', 'preeminent', 'wisdom', 'straightest', 'energies', 'possessing', 'mortals'],
-  indu: ['soma', 'indra', 'treachery', 'drops', 'draught', 'repel'],
-  ushas: ['usas', 'dawn', 'morning', 'light', 'darkness', 'chariot', 'daughter', 'heaven', 'awakens', 'shining', 'red', 'creatures', 'birds', 'matron', 'rousing', 'stirs', 'fly'],
-  usas: ['ushas', 'dawn', 'morning', 'light', 'daughter', 'sky', 'creatures', 'birds', 'matron', 'rousing', 'stirs', 'fly', 'prosperity'],
-  dawn: ['ushas', 'usas', 'morning', 'day', 'sun', 'darkness', 'light', 'radiant', 'heaven', 'chariot', 'matron', 'rousing', 'stirs', 'creatures', 'birds'],
-  arouse: ['rousing', 'stirs', 'tending', 'matron', 'creatures', 'feet', 'birds', 'fly', 'usas'],
-  varuna: ['mitra', 'law', 'order', 'waters', 'fetters', 'sin', 'king', 'sovereign', 'aditya', 'ordinances', 'dyaus'],
-  mitra: ['varuna', 'law', 'kings', 'sovran', 'strength', 'heaven', 'renowned', 'folk'],
-  maruts: ['storm', 'winds', 'rudra', 'rain', 'lightning', 'spears', 'chariots', 'troop', 'singers', 'spotted', 'deer'],
+  agni: ['fire', 'priest', 'hotar', 'sacrifice', 'flame', 'messenger', 'altar', 'oblation', 'invoker', 'household'],
+  fire: ['agni', 'flame', 'blaze', 'burn', 'sacrifice', 'radiant', 'priest', 'hotar'],
+  indra: ['thunderbolt', 'bolt', 'vritra', 'vrtra', 'dragon', 'serpent', 'soma', 'warrior', 'waters', 'maruts', 'hero'],
+  vritra: ['indra', 'dragon', 'serpent', 'waters', 'slew', 'thunderbolt', 'mountain'],
+  vrtra: ['indra', 'dragon', 'slew', 'mountain', 'waters'],
+  dragon: ['vritra', 'vrtra', 'indra', 'slew', 'mountain', 'waters', 'thunder'],
+  soma: ['indu', 'juice', 'draught', 'drop', 'drops', 'pressed', 'purified', 'drink', 'immortal', 'pavamana'],
+  indu: ['soma', 'indra', 'drops', 'draught'],
+  ushas: ['usas', 'dawn', 'morning', 'light', 'darkness', 'chariot', 'daughter', 'heaven'],
+  usas: ['ushas', 'dawn', 'morning', 'light', 'daughter', 'sky'],
+  dawn: ['ushas', 'usas', 'morning', 'day', 'sun', 'darkness', 'light', 'radiant', 'heaven'],
+  varuna: ['mitra', 'law', 'order', 'waters', 'sin', 'king', 'sovereign', 'aditya', 'ordinances'],
+  mitra: ['varuna', 'law', 'kings', 'sovran', 'strength', 'heaven'],
+  maruts: ['storm', 'winds', 'rudra', 'rain', 'lightning', 'spears', 'chariots'],
   surya: ['sun', 'savitar', 'savitr', 'steeds', 'light', 'eye', 'heaven', 'chariot', 'dawn'],
   savitar: ['sun', 'surya', 'golden', 'god', 'light', 'splendour', 'gayatri'],
-  gayatri: ['savitar', 'sun', 'meditate', 'divine', 'intellect', 'prayers', 'tristup', 'jagati'],
-  purusha: ['purusa', 'man', 'thousand', 'heads', 'eyes', 'feet', 'sacrifice', 'born', 'brahman', 'rajanya', 'vaisya', 'sudra', 'moon', 'mind', 'victim', 'divided', 'portions', 'mouth', 'arms', 'thighs'],
-  purusa: ['purusha', 'thousand', 'heads', 'eyes', 'feet', 'sacrifice', 'brahman', 'rajanya', 'vaisya', 'sudra', 'divided', 'portions', 'mouth', 'arms', 'thighs'],
-  classes: ['brahman', 'rajanya', 'vaisya', 'sudra', 'mouth', 'arms', 'thighs', 'feet', 'divided', 'portions', 'purusa'],
-  creation: ['existent', 'non', 'death', 'immortal', 'breathless', 'darkness', 'waters', 'desire', 'seed', 'origin', 'gods', 'purusha', 'whence', 'declare'],
-  kama: ['desire', 'primal', 'seed', 'germ', 'spirit', 'arose', 'beginning'],
-  desire: ['kama', 'primal', 'seed', 'germ', 'spirit', 'arose', 'beginning'],
-  rita: ['law', 'truth', 'order', 'guardian', 'guard', 'uphold', 'lords', 'shining', 'eternal', 'ordinances', 'sacrifices'],
-  order: ['law', 'eternal', 'guard', 'uphold', 'lords', 'shining', 'ordinances'],
-  death: ['yama', 'departed', 'fathers', 'path', 'ancestors', 'funeral', 'fire', 'immortal'],
-  yama: ['death', 'king', 'fathers', 'departed', 'path', 'dogs', 'sarama', 'first', 'pathway'],
-  ashvins: ['asvins', 'twins', 'physicians', 'chariot', 'healing', 'wonder', 'nasatyas', 'youth', 'blind', 'sweet', 'food', 'falcons', 'flying', 'swifter', 'triple', 'wheeled'],
-  asvins: ['ashvins', 'twins', 'chariot', 'wonder', 'healing', 'nasatyas', 'sweet', 'falcons', 'flying', 'swifter', 'triple', 'wheeled'],
-  vishnu: ['visnu', 'strides', 'three', 'steps', 'wide', 'measured', 'highest', 'step'],
-  rudra: ['maruts', 'healing', 'remedies', 'bow', 'arrows', 'fierce', 'father', 'jalasha', 'tryambaka'],
+  gayatri: ['savitar', 'sun', 'meditate', 'divine', 'intellect', 'prayers'],
+  purusha: ['purusa', 'man', 'thousand', 'heads', 'eyes', 'feet', 'sacrifice', 'brahman', 'rajanya', 'vaisya', 'sudra'],
+  purusa: ['purusha', 'thousand', 'heads', 'eyes', 'feet', 'sacrifice', 'brahman', 'rajanya', 'vaisya', 'sudra'],
+  creation: ['existent', 'non', 'death', 'immortal', 'darkness', 'waters', 'desire', 'seed', 'origin'],
+  kama: ['desire', 'primal', 'seed', 'germ', 'spirit', 'beginning'],
+  desire: ['kama', 'primal', 'seed', 'germ', 'spirit', 'beginning'],
+  rita: ['law', 'truth', 'order', 'guardian', 'eternal', 'ordinances'],
+  order: ['law', 'eternal', 'ordinances', 'rita'],
+  death: ['yama', 'departed', 'fathers', 'path', 'ancestors', 'funeral', 'immortal'],
+  afterlife: ['yama', 'fathers', 'departed', 'pathways', 'heaven', 'immortal', 'pitrs'],
+  funeral: ['yama', 'fathers', 'departed', 'fire', 'earth', 'ancestors'],
+  ancestors: ['fathers', 'pitrs', 'sires', 'yama', 'pathways', 'departed'],
+  yama: ['death', 'king', 'fathers', 'departed', 'path'],
+  ashvins: ['asvins', 'twins', 'physicians', 'chariot', 'healing', 'wonder', 'nasatyas'],
+  asvins: ['ashvins', 'twins', 'chariot', 'wonder', 'healing', 'nasatyas'],
+  vishnu: ['visnu', 'strides', 'three', 'steps', 'wide', 'measured', 'highest'],
+  rudra: ['maruts', 'healing', 'remedies', 'bow', 'arrows', 'fierce', 'father', 'tryambaka'],
   vayu: ['wind', 'soma', 'indra', 'drink', 'steeds', 'swift'],
-  sarama: ['panis', 'kine', 'cows', 'indra', 'envoy', 'appointed', 'messenger', 'treasure', 'ample', 'stores', 'wealth', 'cave', 'aspect', 'afar', 'comest', 'rasa'],
-  envoy: ['appointed', 'messenger', 'herald', 'sarama', 'panis', 'stores', 'agni'],
-  treasures: ['stores', 'wealth', 'ample', 'gatherer', 'queen', 'panis', 'riches'],
-  gambler: ['dice', 'vibhidaka', 'wife', 'play', 'lament', 'aksha', 'cultivate', 'corn'],
-  dice: ['gambler', 'vibhidaka', 'play', 'wife', 'ruin', 'cultivate', 'corn'],
-  speech: ['vak', 'vac', 'voice', 'queen', 'word', 'eloquent', 'gods', 'rishi', 'gatherer', 'riches', 'treasures', 'rudras', 'vasus', 'travel', 'stablished'],
-  vac: ['vak', 'speech', 'queen', 'gatherer', 'riches', 'treasures', 'worship', 'worlds', 'rudras', 'vasus', 'travel', 'stablished', 'abide'],
-  vak: ['vac', 'speech', 'queen', 'gatherer', 'treasures', 'worship', 'rudras', 'vasus', 'travel', 'stablished'],
-  duta: ['messenger', 'herald', 'agni', 'choose', 'master', 'oblation', 'bearer', 'house', 'invoke'],
-  messenger: ['duta', 'envoy', 'herald', 'appointed', 'agni', 'choose', 'master', 'oblation', 'bearer'],
-  dyava: ['heaven', 'earth', 'twain', 'uphold', 'footless', 'parents', 'bosom', 'elder', 'support', 'existing'],
-  prithivi: ['heaven', 'earth', 'twain', 'uphold', 'footless', 'parents', 'bosom', 'elder', 'support', 'existing'],
-  parents: ['twain', 'uphold', 'footless', 'bosom', 'elder', 'heaven', 'earth', 'support', 'existing'],
+  sarama: ['panis', 'kine', 'cows', 'indra', 'envoy', 'messenger', 'treasure'],
+  gambler: ['dice', 'wife', 'play', 'lament', 'cultivate', 'corn'],
+  dice: ['gambler', 'play', 'wife', 'ruin', 'cultivate', 'corn'],
+  speech: ['vak', 'vac', 'voice', 'queen', 'word', 'eloquent', 'gods', 'sages'],
+  vac: ['vak', 'speech', 'queen', 'voice', 'word', 'worship'],
+  vak: ['vac', 'speech', 'queen', 'voice', 'word', 'worship'],
+  duta: ['messenger', 'herald', 'agni', 'oblation', 'bearer'],
+  messenger: ['duta', 'envoy', 'herald', 'agni', 'oblation', 'bearer'],
+  dyava: ['heaven', 'earth', 'twain', 'parents', 'support'],
+  prithivi: ['heaven', 'earth', 'twain', 'parents', 'support'],
   samjnana: ['assemble', 'speak', 'together', 'minds', 'accord', 'resolve', 'hearts', 'united'],
   concord: ['assemble', 'speak', 'together', 'minds', 'accord', 'resolve', 'hearts', 'united'],
-  kanvas: ['kanva', 'friend', 'conqueror', 'foe', 'agni', 'singers', 'princes'],
-  kanva: ['kanvas', 'friend', 'conqueror', 'foe', 'agni', 'singers', 'princes'],
   sarasvati: ['river', 'waters', 'stream', 'speech', 'inspirer', 'flood'],
-  riddle: ['one', 'sages', 'title', 'garutman', 'matarisvan', 'call'],
-  names: ['one', 'sages', 'title', 'garutman', 'matarisvan', 'call', 'indra', 'mitra', 'varuna', 'agni'],
+  marriage: ['bride', 'bridal', 'husband', 'wife', 'wedded', 'home'],
+  wedding: ['bride', 'bridal', 'husband', 'wife', 'wedded', 'surya'],
+  family: ['household', 'home', 'sons', 'grandsons', 'children', 'offspring', 'wife', 'husband'],
+  herbs: ['plants', 'healing', 'medicine', 'powers', 'physician', 'disease', 'remedy'],
+  medicine: ['healing', 'herbs', 'plants', 'physician', 'disease', 'remedy', 'asvins', 'rudra'],
+  healing: ['medicine', 'herbs', 'plants', 'physician', 'disease', 'remedy', 'asvins', 'rudra'],
+  agriculture: ['plough', 'ploughshare', 'ploughing', 'furrows', 'field', 'barley', 'corn', 'sowing'],
+  farming: ['plough', 'ploughshare', 'ploughing', 'furrows', 'field', 'barley', 'corn', 'sowing'],
+  ploughing: ['plough', 'ploughshare', 'furrows', 'field', 'barley', 'corn', 'sowing'],
+  friendship: ['friend', 'friends', 'comrade', 'companion', 'cordial', 'faithful', 'mitra'],
+  truth: ['falsehood', 'true', 'false', 'honest', 'rita', 'law'],
+  falsehood: ['truth', 'true', 'false', 'honest', 'deceit', 'wicked'],
+  meditation: ['meditate', 'savitar', 'savita', 'glory', 'light', 'prayers', 'intellect', 'thought'],
+  meditate: ['savitar', 'savita', 'glory', 'light', 'prayers', 'intellect'],
+  horses: ['steeds', 'coursers', 'chariots', 'chariot', 'swift'],
+  chariots: ['chariot', 'horses', 'steeds', 'wheels', 'car'],
+  hospitality: ['guest', 'household', 'home', 'agni', 'welcome', 'friend'],
+  weapons: ['bow', 'arrows', 'arrow', 'quiver', 'armour', 'chariot', 'warrior'],
+  frogs: ['brahmanas', 'vows', 'parjanya', 'rain', 'voices'],
 };
 
 class HybridKnowledgeBase {
@@ -727,10 +880,18 @@ class HybridKnowledgeBase {
       this.m1m10Metadata = JSON.parse(fs.readFileSync(METADATA_JSON_PATH, 'utf-8')) as VerseMetadata[];
     }
 
-    if (fs.existsSync(COMPLETE_CORPUS_PATH) || fs.existsSync(COMPLETE_CORPUS_GZ_PATH)) {
+    if (
+      fs.existsSync(COMPLETE_CORPUS_PATH) ||
+      fs.existsSync(COMPLETE_CORPUS_GZ_PATH) ||
+      fs.existsSync(COMPLETE_CORPUS_B64_PATH)
+    ) {
       const rawJson = fs.existsSync(COMPLETE_CORPUS_PATH)
         ? fs.readFileSync(COMPLETE_CORPUS_PATH, 'utf-8')
-        : zlib.gunzipSync(fs.readFileSync(COMPLETE_CORPUS_GZ_PATH)).toString('utf-8');
+        : fs.existsSync(COMPLETE_CORPUS_GZ_PATH)
+        ? zlib.gunzipSync(fs.readFileSync(COMPLETE_CORPUS_GZ_PATH)).toString('utf-8')
+        : zlib
+            .gunzipSync(Buffer.from(fs.readFileSync(COMPLETE_CORPUS_B64_PATH, 'utf-8').trim(), 'base64'))
+            .toString('utf-8');
       const parsed = JSON.parse(rawJson) as {
         mandalas: CompleteMandalaRecord[];
       };
@@ -741,7 +902,20 @@ class HybridKnowledgeBase {
         this.mandalaMap.set(mRec.mandala, mRec);
         for (const hRec of mRec.hymns) {
           this.hymnMap.set(`${hRec.mandala}_${hRec.sukta}`, hRec);
-          for (const v of hRec.verses) {
+          for (let vIdx = 0; vIdx < hRec.verses.length; vIdx++) {
+            const v = hRec.verses[vIdx];
+            v.english_translation = cleanCorpusText(v.english_translation);
+            v.wilson_translation = cleanCorpusText(v.wilson_translation);
+            if (v.griffith_verse) v.griffith_verse = cleanCorpusText(v.griffith_verse);
+            if (!v.english_translation) {
+              v.english_translation =
+                v.griffith_verse ||
+                (vIdx > 0 ? hRec.verses[vIdx - 1].english_translation : '') ||
+                `Hymn ${hRec.mandala}.${hRec.sukta} (${hRec.deity || 'Vedic Hymn'}), Verse ${v.verse}.`;
+            }
+            if (!v.wilson_translation) {
+              v.wilson_translation = v.english_translation;
+            }
             const vMeta: VerseMetadata = {
               index: globalIdx++,
               verse_id: v.verse_id,
@@ -767,7 +941,10 @@ class HybridKnowledgeBase {
         }
       }
     } else if (this.m1m10Metadata.length > 0) {
-      this.metadata = this.m1m10Metadata;
+      this.metadata = this.m1m10Metadata.map((rec) => ({
+        ...rec,
+        english_translation: cleanCorpusText(rec.english_translation),
+      }));
       for (const rec of this.metadata) {
         this.verseIndex.set(rec.verse_id, rec);
       }
@@ -778,7 +955,7 @@ class HybridKnowledgeBase {
     const m1m10ById = new Map<string, string>();
     for (const mRec of this.m1m10Metadata) {
       if (mRec.verse_id && mRec.english_translation) {
-        m1m10ById.set(mRec.verse_id, mRec.english_translation);
+        m1m10ById.set(mRec.verse_id, cleanCorpusText(mRec.english_translation));
       }
     }
 
@@ -859,9 +1036,12 @@ class HybridKnowledgeBase {
         }
       }
 
-      // Fallback 1: Load compressed Int8 quantized FAISS vectors (faiss.int8.bin.gz)
-      if (fs.existsSync(FAISS_INT8_GZ_PATH)) {
-        const rawBuf = zlib.gunzipSync(fs.readFileSync(FAISS_INT8_GZ_PATH));
+      // Fallback 1: Load compressed Int8 quantized FAISS vectors (faiss.int8.bin.gz or .b64)
+      if (fs.existsSync(FAISS_INT8_GZ_PATH) || fs.existsSync(FAISS_INT8_B64_PATH)) {
+        const gzBuf = fs.existsSync(FAISS_INT8_GZ_PATH)
+          ? fs.readFileSync(FAISS_INT8_GZ_PATH)
+          : Buffer.from(fs.readFileSync(FAISS_INT8_B64_PATH, 'utf-8').trim(), 'base64');
+        const rawBuf = zlib.gunzipSync(gzBuf);
         if (rawBuf.length >= expectedFloats) {
           const int8 = new Int8Array(rawBuf.buffer, rawBuf.byteOffset, expectedFloats);
           const f32 = new Float32Array(expectedFloats);
@@ -1000,28 +1180,21 @@ class HybridKnowledgeBase {
     }
 
     const qLower = query.toLowerCase();
-    // Standard canonical hymn name aliases (general Vedic terminology)
+    // Standard canonical hymn name aliases only (no query-specific regexes)
     if (qLower.includes('purusha sukta') || qLower.includes('purusa sukta')) {
       preferredHymns.add('10_90');
     }
     if (qLower.includes('nasadiya sukta') || qLower.includes('hymn of creation')) {
       preferredHymns.add('10_129');
     }
-    if (
-      qLower.includes('samjnana') ||
-      qLower.includes('final hymn') ||
-      qLower.includes('final harmony')
-    ) {
+    if (qLower.includes('samjnana sukta')) {
       preferredHymns.add('10_191');
     }
-    if (qLower.includes('gambler') || qLower.includes('play not with dice')) {
+    if (qLower.includes('gambler') && qLower.includes('hymn')) {
       preferredHymns.add('10_34');
     }
-    if (qLower.includes('opening invocation') || qLower.includes('first verse of the rig veda')) {
+    if (qLower.includes('first verse of the rig veda')) {
       explicitVerseIds.add('RV_1_1_1');
-    }
-    if (qLower.includes('dyava-prithivi') || qLower.includes('dyavaprithivi')) {
-      preferredHymns.add('1_185');
     }
 
     return {
@@ -1032,6 +1205,7 @@ class HybridKnowledgeBase {
       preferredHymns,
       preferredSuktas,
       preferredMandalas,
+      hasExplicitLifeTheme: Boolean(lifeTheme),
     };
   }
 
@@ -1039,7 +1213,8 @@ class HybridKnowledgeBase {
     query: string,
     topK = 50,
     mandalaFilter?: number | null,
-    lifeTheme?: LifeThemeId | null
+    lifeTheme?: LifeThemeId | null,
+    pureLexical = false
   ): Array<VerseMetadata & { bm25_rank: number; bm25_score: number }> {
     const rawTokens = preprocessText(query);
     if (rawTokens.length === 0) return [];
@@ -1047,7 +1222,6 @@ class HybridKnowledgeBase {
     const baseTokens = filteredTokens.length > 0 ? filteredTokens : rawTokens;
 
     const {
-      themeCanonicals,
       themeExpansionTokens,
       explicitVerseIds,
       preferredHymns,
@@ -1056,10 +1230,12 @@ class HybridKnowledgeBase {
     } = this.extractQueryHints(query, mandalaFilter, lifeTheme);
 
     const synonymTokens = new Set<string>();
-    for (const qt of baseTokens) {
-      const syns = SEMANTIC_SYNONYMS[qt];
-      if (syns) {
-        for (const s of syns) synonymTokens.add(s);
+    if (!pureLexical) {
+      for (const qt of baseTokens) {
+        const syns = SEMANTIC_SYNONYMS[qt];
+        if (syns) {
+          for (const s of syns) synonymTokens.add(s);
+        }
       }
     }
 
@@ -1088,36 +1264,34 @@ class HybridKnowledgeBase {
         score += idfVal * (num / den);
       }
 
-      for (const synTok of synonymTokens) {
-        const tf = tfMap.get(synTok) || 0;
-        if (tf === 0) continue;
-        const idfVal = this.idf.get(synTok) || 0;
-        score += 0.42 * idfVal * ((tf * (this.k1 + 1)) / (tf + this.k1));
-      }
+      if (!pureLexical) {
+        for (const synTok of synonymTokens) {
+          const tf = tfMap.get(synTok) || 0;
+          if (tf === 0) continue;
+          const idfVal = this.idf.get(synTok) || 0;
+          score += 0.35 * idfVal * ((tf * (this.k1 + 1)) / (tf + this.k1));
+        }
 
-      for (const expTok of themeExpansionTokens) {
-        const tf = tfMap.get(expTok) || 0;
-        if (tf === 0) continue;
-        const idfVal = this.idf.get(expTok) || 0;
-        score += 0.4 * idfVal * ((tf * (this.k1 + 1)) / (tf + this.k1));
-      }
-
-      if (themeCanonicals.has(meta.verse_id) && explicitVerseIds.size === 0) {
-        score += 18.0;
+        for (const expTok of themeExpansionTokens) {
+          const tf = tfMap.get(expTok) || 0;
+          if (tf === 0) continue;
+          const idfVal = this.idf.get(expTok) || 0;
+          score += 0.3 * idfVal * ((tf * (this.k1 + 1)) / (tf + this.k1));
+        }
       }
 
       const hymnKey = `${meta.mandala}_${meta.sukta}`;
-      if (preferredHymns.has(hymnKey)) {
-        score += score > 0 ? 15.0 : 5.0;
+      if (preferredHymns.has(hymnKey) && score > 0) {
+        score += 8.0;
       } else if (preferredSuktas.has(meta.sukta) && score > 0) {
-        score += 10.0;
+        score += 6.0;
       }
 
       if (preferredMandalas.size > 0) {
         if (preferredMandalas.has(meta.mandala) && score > 0) {
-          score += 5.0;
-        } else if (!preferredMandalas.has(meta.mandala) && !themeCanonicals.has(meta.verse_id)) {
-          score *= 0.45;
+          score += 3.0;
+        } else if (!preferredMandalas.has(meta.mandala)) {
+          score *= 0.55;
         }
       }
 
@@ -1150,7 +1324,8 @@ class HybridKnowledgeBase {
     query: string,
     topK = 50,
     mandalaFilter?: number | null,
-    lifeTheme?: LifeThemeId | null
+    lifeTheme?: LifeThemeId | null,
+    pureDense = false
   ): Promise<Array<VerseMetadata & { dense_rank: number; dense_score: number }>> {
     if (!query || !query.trim()) return [];
     if (!this.faissVectors || this.faissNtotal !== this.metadata.length) {
@@ -1160,7 +1335,6 @@ class HybridKnowledgeBase {
     }
 
     const {
-      themeCanonicals,
       explicitVerseIds,
       preferredHymns,
       preferredSuktas,
@@ -1183,15 +1357,23 @@ class HybridKnowledgeBase {
         dot += qVec[d] * vectors[offset + d];
       }
 
-      const hymnKey = `${meta.mandala}_${meta.sukta}`;
       if (explicitVerseIds.has(meta.verse_id)) {
         dot += 0.35;
       }
-      if (preferredHymns.has(hymnKey)) {
-        dot += 0.08;
-      }
-      if (preferredMandalas.size > 0 && preferredMandalas.has(meta.mandala)) {
-        dot += 0.04;
+      if (!pureDense) {
+        const hymnKey = `${meta.mandala}_${meta.sukta}`;
+        if (preferredHymns.has(hymnKey)) {
+          dot += 0.08;
+        } else if (preferredSuktas.has(meta.sukta)) {
+          dot += 0.05;
+        }
+        if (preferredMandalas.size > 0) {
+          if (preferredMandalas.has(meta.mandala)) {
+            dot += 0.04;
+          } else {
+            dot *= 0.75;
+          }
+        }
       }
 
       scores.push({ idx, score: dot });
@@ -1228,8 +1410,10 @@ class HybridKnowledgeBase {
     }
     const useReranker = enableReranker || retrievalMode === 'hybrid_rerank';
     const effCandidateK = Math.max(candidateK, topK, 100);
-    const bm25Results = this.searchBM25(query, effCandidateK, mandalaFilter, lifeTheme);
-    const denseResults = await this.searchDense(query, effCandidateK, mandalaFilter, lifeTheme);
+    const pureBM25 = retrievalMode === 'bm25';
+    const pureDense = retrievalMode === 'dense';
+    const bm25Results = this.searchBM25(query, effCandidateK, mandalaFilter, lifeTheme, pureBM25);
+    const denseResults = await this.searchDense(query, effCandidateK, mandalaFilter, lifeTheme, pureDense);
 
     const {
       themeCanonicals,
@@ -1330,23 +1514,29 @@ class HybridKnowledgeBase {
       } else if (retrievalMode === 'dense') {
         score = rec.dense_rank !== null ? 1.0 / (rrfK + rec.dense_rank) : 0;
       } else {
-        if (rec.bm25_rank !== null) score += 1.35 / (rrfK + rec.bm25_rank);
-        if (rec.dense_rank !== null) score += 0.9 / (rrfK + rec.dense_rank);
-        if (rec.bm25_rank !== null && rec.dense_rank !== null && rec.bm25_rank <= 30 && rec.dense_rank <= 30) {
-          score += 0.0028;
+        if (rec.bm25_rank !== null) {
+          score += 1.55 / (rrfK + rec.bm25_rank) + 1.85 / (14 + rec.bm25_rank);
+        }
+        if (rec.dense_rank !== null) {
+          score += 0.85 / (rrfK + rec.dense_rank) + 0.45 / (22 + rec.dense_rank);
+        }
+        if (rec.bm25_rank !== null && rec.dense_rank !== null && rec.bm25_rank <= 25 && rec.dense_rank <= 25) {
+          score += 0.0045;
         }
         if (rec.bm25_score !== null && rec.bm25_score > 0) {
-          score += Math.min(rec.bm25_score / 2500.0, 0.015);
+          score += Math.min(rec.bm25_score / 1800.0, 0.022);
         }
       }
-      if (themeCanonicals.has(rec.verse_id) && targetVerseIds.size === 0) {
-        score += 0.012;
-      }
-      if (preferredHymns.has(`${rec.mandala}_${rec.sukta}`)) {
-        score += 0.006;
-      }
-      if (preferredMandalas.size > 0 && preferredMandalas.has(rec.mandala)) {
-        score += 0.003;
+      if (retrievalMode !== 'bm25' && retrievalMode !== 'dense') {
+        if (lifeTheme && themeCanonicals.has(rec.verse_id) && targetVerseIds.size === 0) {
+          score += 0.015;
+        }
+        if (preferredHymns.has(`${rec.mandala}_${rec.sukta}`)) {
+          score += 0.008;
+        }
+        if (preferredMandalas.size > 0 && preferredMandalas.has(rec.mandala)) {
+          score += 0.004;
+        }
       }
       if (targetVerseIds.has(rec.verse_id)) {
         score += 1.0;
@@ -1389,13 +1579,15 @@ class HybridKnowledgeBase {
           item.bm25_rank !== null && item.dense_rank !== null && item.bm25_rank <= 25 && item.dense_rank <= 25
             ? 0.45
             : 0;
-        const themeBonus = themeCanonicals.has(item.verse_id) ? 0.85 : 0;
-        const bm25Norm = item.bm25_score ? Math.min(item.bm25_score / 35.0, 0.9) : 0;
+        const themeBonus = lifeTheme && themeCanonicals.has(item.verse_id) ? 0.25 : 0;
+        const bm25Norm = item.bm25_score ? Math.min(item.bm25_score / 28.0, 1.2) : 0;
+        const denseNorm = item.dense_score ? Math.max(0, item.dense_score) * 0.8 : 0;
         item.rerank_score = Number(
           (
             item.rrf_score * 100 +
             bm25Norm +
-            overlap * 0.16 +
+            denseNorm +
+            overlap * 0.22 +
             bigramBonus +
             dualBonus +
             themeBonus
@@ -1515,8 +1707,31 @@ export function isOutOfScopeQuestion(text: string): boolean {
   );
 }
 
+const QUESTION_FRAMING_VERBS = new Set([
+  'happen', 'happens', 'happened', 'mean', 'means', 'meant', 'meaning',
+  'teach', 'teaches', 'taught', 'explain', 'explains', 'explained',
+  'state', 'states', 'stated', 'mention', 'mentions', 'mentioned',
+  'relate', 'relates', 'related', 'view', 'views', 'viewed',
+  'speak', 'speaks', 'spoke', 'talk', 'talks', 'present', 'presents',
+  'portray', 'portrays', 'show', 'shows', 'tell', 'tells', 'told',
+]);
+
 function evidenceRelevanceRatio(query: string, evidenceList: RetrievedVerse[]): number {
-  const qTokens = preprocessText(query).filter((t) => !STOPWORDS.has(t) && t.length >= 4);
+  const explicitRefMatch =
+    query.match(/RV_(\d+)_(\d+)_(\d+)/i) ||
+    query.match(/\b(\d+)\.(\d+)\.(\d+)\b/) ||
+    query.match(/\bmandala\s+(\d+)\s*,?\s*(?:sukta|hymn)\s+(\d+)/i);
+  if (explicitRefMatch && evidenceList.length > 0) {
+    const m = parseInt(explicitRefMatch[1], 10);
+    const s = parseInt(explicitRefMatch[2], 10);
+    if (evidenceList.some((item) => item.mandala === m && item.sukta === s)) {
+      return 1.0;
+    }
+  }
+
+  const qTokens = preprocessText(query).filter(
+    (t) => !STOPWORDS.has(t) && !QUESTION_FRAMING_VERBS.has(t) && t.length >= 4
+  );
   if (qTokens.length === 0) return 1.0;
 
   const detectedThemes = detectLifeThemes(query);
@@ -1524,9 +1739,13 @@ function evidenceRelevanceRatio(query: string, evidenceList: RetrievedVerse[]): 
     return Math.max(0.5, 1.0);
   }
 
+  const kbInstance = getKB();
   const eTokens = new Set<string>();
   for (const item of evidenceList) {
-    for (const t of preprocessText(`${item.english_translation} ${item.deity || ''}`)) {
+    const fullRec = kbInstance.verseIndex.get(item.verse_id);
+    for (const t of preprocessText(
+      `${item.english_translation} ${fullRec?.wilson_translation || ''} ${item.deity || ''} ${item.hymn_title || ''}`
+    )) {
       eTokens.add(t);
     }
   }
@@ -1591,14 +1810,15 @@ function resolveAdjacentVerseId(
     const mandala = parseInt(parts[1], 10);
     const sukta = parseInt(parts[2], 10);
     const verse = parseInt(parts[3], 10);
-    const targetVerse = direction === 'next' ? verse + 1 : Math.max(1, verse - 1);
+    if (direction === 'prev' && verse <= 1) continue;
+    const targetVerse = direction === 'next' ? verse + 1 : verse - 1;
     const candidateId = `RV_${mandala}_${sukta}_${targetVerse}`;
     if (!instance || instance.verseIndex.has(candidateId)) {
       return { mandala, sukta, verse: targetVerse, verseId: candidateId };
     }
   }
 
-  // Fallback: if single-verse sukta (e.g. RV_1_99_1), advance to first verse of next sukta
+  // Fallback: if single-verse sukta or at boundary of sukta, advance/step back to adjacent sukta
   const parts = citations[0].split('_');
   const mandala = parseInt(parts[1], 10);
   const sukta = parseInt(parts[2], 10);
@@ -1610,8 +1830,18 @@ function resolveAdjacentVerseId(
     }
     return { mandala, sukta, verse: verse + 1, verseId: `RV_${mandala}_${sukta}_${verse + 1}` };
   } else {
-    const prevV = Math.max(1, verse - 1);
-    return { mandala, sukta, verse: prevV, verseId: `RV_${mandala}_${sukta}_${prevV}` };
+    if (verse > 1) {
+      const prevV = verse - 1;
+      return { mandala, sukta, verse: prevV, verseId: `RV_${mandala}_${sukta}_${prevV}` };
+    }
+    if (instance && sukta > 1) {
+      const prevH = instance.hymnMap.get(`${mandala}_${sukta - 1}`);
+      if (prevH && prevH.verses.length > 0) {
+        const lastV = prevH.verses[prevH.verses.length - 1].verse;
+        return { mandala, sukta: sukta - 1, verse: lastV, verseId: `RV_${mandala}_${sukta - 1}_${lastV}` };
+      }
+    }
+    return { mandala, sukta, verse: 1, verseId: `RV_${mandala}_${sukta}_1` };
   }
 }
 
@@ -1783,12 +2013,58 @@ export function analyzeQuery(
 
 function buildContextBlock(evidenceList: RetrievedVerse[]): string {
   if (!evidenceList || evidenceList.length === 0) return 'NO EVIDENCE AVAILABLE.';
+  const kbInstance = getKB();
   return evidenceList
-    .map(
-      (item, idx) =>
-        `EVIDENCE ${idx + 1}\nVerse ID: ${item.verse_id}\nLocation: Mandala ${item.mandala}, Sukta ${item.sukta}, Verse ${item.verse}${item.deity ? ` (Deity: ${item.deity})` : ''}\nEnglish Translation:\n"${item.english_translation.trim()}"`
-    )
+    .map((item, idx) => {
+      const fullRec = kbInstance.verseIndex.get(item.verse_id);
+      const wilson = fullRec?.wilson_translation ? `\nWilson Translation (1866):\n"${fullRec.wilson_translation.trim()}"` : '';
+      return `EVIDENCE ${idx + 1}\nVerse ID: ${item.verse_id}\nLocation: Mandala ${item.mandala}, Sukta ${item.sukta}, Verse ${item.verse}${item.deity ? ` (Deity/Subject: ${item.deity})` : ''}${item.hymn_title ? ` — ${item.hymn_title}` : ''}\nGriffith Translation (1896):\n"${item.english_translation.trim()}"${wilson}`;
+    })
     .join('\n\n');
+}
+
+export function buildEnforcedVedaWiseSystemInstruction(options?: {
+  question?: string;
+  effectiveQuery?: string;
+  retrievedVerseIds?: string[];
+  expectedInterpretationType?: 'direct' | 'inferred' | 'contextual';
+  customInstruction?: string;
+}): string {
+  const allowedIds =
+    options?.retrievedVerseIds && options.retrievedVerseIds.length > 0
+      ? options.retrievedVerseIds.join(', ')
+      : 'ONLY the verse IDs present in the RETRIEVED ENGLISH EVIDENCE block';
+  const modeHint = options?.expectedInterpretationType
+    ? `\nDETECTED EPISTEMIC MODE FOR THIS QUERY: "${options.expectedInterpretationType}".\n` +
+      (options.expectedInterpretationType === 'contextual'
+        ? '- Because this question involves modern, everyday, or indirect framing, you MUST populate "context" (starting with phrasing such as "Although the Rig Veda does not state this idea in exactly these modern terms, the passage can be understood as reflecting...") and set "interpretation_type" to "contextual".'
+        : options.expectedInterpretationType === 'inferred'
+        ? '- Because this question asks about a broader conceptual or philosophical theme across verses, you MUST distinguish what the verse literally states from what is reasonably inferred, populate "context" to explain the scriptural inference, and set "interpretation_type" to "inferred".'
+        : '- Because this question asks directly about a specific scriptural verse, hymn, or Vedic deity, focus on what the text directly states and set "interpretation_type" to "direct".')
+    : '';
+
+  const extra =
+    options?.customInstruction &&
+    options.customInstruction.trim() &&
+    options.customInstruction.trim() !== GROUNDED_SYSTEM_PROMPT.trim()
+      ? `\n\nADDITIONAL CALLER CONTEXT:\n${options.customInstruction.trim()}`
+      : '';
+
+  return `${GROUNDED_SYSTEM_PROMPT}
+
+MANDATORY RUNTIME ENFORCEMENT FOR THIS LLM REQUEST:
+- You MUST follow the 5-part VedaWise teacher structure:
+  1. Direct Answer ("direct_answer" -> rendered under "Answer:")
+  2. Simple Explanation ("explanation" -> rendered under "Explanation:")
+  3. Context / Indirect Connection ("context" -> rendered under "Context:")
+  4. Textual Basis ("textual_basis" -> rendered under "Textual basis:")
+  5. Compact References ("references" -> rendered under "References:")
+- You MUST maintain a formal, simple, clear, and accessible teacher tone. Never format the response like a research paper or technical database dump.
+- You MUST explicitly distinguish between:
+  (a) Direct knowledge ("epistemic_distinction.direct"): What the text directly and literally says in its ancient Vedic context.
+  (b) Inferred knowledge ("epistemic_distinction.inferred"): What broader ethical or philosophical principle can reasonably be inferred from the passage.
+  (c) Contextual knowledge ("epistemic_distinction.contextual"): How a modern reader may contextually relate the passage to daily life without claiming modern concepts ("management", "corporate leadership", "team management", "democratic leadership") are stated literally in the scripture.
+- ALLOWED CITATION IDS: [${allowedIds}]. Never invent or cite any verse outside this list.${modeHint}${extra}`;
 }
 
 function buildRagUserPrompt(
@@ -1800,25 +2076,687 @@ function buildRagUserPrompt(
   const themeDef = primaryTheme ? LIFE_THEMES[primaryTheme] : null;
   return `USER QUESTION: ${question}
 RESOLVED SEARCH QUERY: ${effectiveQuery}
-${themeDef ? `DETECTED LIFE THEME: ${themeDef.label} (${themeDef.sanskrit_concept})` : ''}
+${themeDef ? `OPTIONAL THEMATIC LENS: ${themeDef.label}` : ''}
 
-RETRIEVED ENGLISH EVIDENCE:
+RETRIEVED ENGLISH EVIDENCE FROM THE RIG VEDA:
 --------------------------------------------------
 ${evidenceContext}
 --------------------------------------------------
 
-INSTRUCTION:
-Return a valid JSON object containing ONLY these four fields: "textual_evidence", "theme", "contemporary_connection", and "unsupported_claim".
-1. Generate the response ONLY from the retrieved verse evidence supplied above.
-2. Every textual claim in "textual_evidence" must cite an actual retrieved [RV_M_S_V] verse ID from the evidence above (e.g., [RV_1_1_1] or [RV_10_191_2]).
-3. Do NOT invent verses, Sanskrit, translations, verse IDs, historical facts, or medical/scientific claims.
-4. Keep the epistemic distinction strict:
-   - textual_evidence: what the retrieved verse literally says (citing [RV_M_S_V] for every claim)
-   - theme: theme supported by the retrieved verse (citing [RV_M_S_V])
-   - contemporary_connection: clearly labeled interpretive reflection grounded in [RV_M_S_V]
-   - unsupported_claim: what the evidence cannot establish
-5. If the evidence does not contain sufficient information to answer reliably, set "textual_evidence" to:
+STRICT VEDAWISE TEACHER INSTRUCTIONS:
+Answer the user's exact question in the voice of a knowledgeable teacher explaining the Rig Veda to an educated general reader.
+Return a valid JSON object with these exact fields:
+1. "direct_answer": 2–4 sentences directly answering the user's exact question in normal, formal, clear language before giving supporting details. Do NOT start with category labels like "Leadership & Responsibility (Nīti & Gopā)..." and do NOT put raw [RV_M_S_V] tags in this opening section.
+2. "explanation": 1–3 short paragraphs explaining the meaning in simple, formal language. Avoid unnecessary Sanskrit jargon. If a Sanskrit term or deity name is important, explain its meaning immediately in simple language. Clearly distinguish between (a) what the text directly says in its historical/religious context and (b) what can reasonably be inferred from it.
+3. "context": Populate this when the connection to the user's wording is indirect, inferred, or contextual (e.g., when the question asks about daily life, modern concepts, or broader themes not stated verbatim in the verse). State clearly: "Although the Rig Veda does not state this idea in exactly these modern terms, the passage can be understood as reflecting..." and explain the connection simply. Never attribute modern buzzwords ("corporate leadership", "management", "team management", "democratic leadership") as literal statements of the ancient text. If the verse directly and literally answers a specific scriptural question, set "context" to "".
+4. "textual_basis": Only after explaining the answer, provide a brief explanation or short quotation from the relevant retrieved passage(s), citing the actual retrieved [RV_M_S_V] verse ID(s). Do not center the answer on long blocks of quoted scripture.
+5. "references": Compact, grouped references supporting the answer (e.g., "Rig Veda 10.191.2–4 [RV_10_191_2], [RV_10_191_3], [RV_10_191_4]").
+6. "interpretation_type": Must be one of:
+   - "direct" (what the text directly and literally says)
+   - "inferred" (what can reasonably be inferred from the passage for a broader scriptural/philosophical question)
+   - "contextual" (a modern or daily-life contextual interpretation/application)
+7. "epistemic_distinction": An object with three concise 1-sentence fields clearly separating:
+   - "direct": What the retrieved verse(s) directly and literally state in their original Vedic liturgical/poetic setting.
+   - "inferred": What broader ethical, philosophical, or thematic principle can reasonably be inferred from the passage.
+   - "contextual": How the passage connects contextually to modern or everyday human reflection (labeled explicitly as a contextual interpretation).
+8. "unsupported_claim": 1–2 sentences stating what the ancient text does not establish (distinguishing literal scripture from modern technical, corporate, or clinical claims).
+9. If there is insufficient textual evidence to answer reliably, set "direct_answer" and "textual_basis" to:
 "I could not find sufficient evidence in the selected English translation corpus to answer this reliably."`;
+}
+
+function modernizeVedicProse(rawText: string): string {
+  if (!rawText) return '';
+  let text = cleanCorpusText(rawText)
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const replacements: Array<[RegExp, string]> = [
+    [/\bthou art\b/gi, 'you are'],
+    [/\bThou art\b/g, 'You are'],
+    [/\bthou hast\b/gi, 'you have'],
+    [/\bthou wast\b/gi, 'you were'],
+    [/\bthou wilt\b/gi, 'you will'],
+    [/\bthou mayst\b/gi, 'you may'],
+    [/\bthou\b/gi, 'you'],
+    [/\bthee\b/gi, 'you'],
+    [/\bthy\b/gi, 'your'],
+    [/\bthine\b/gi, 'yours'],
+    [/\bye\b/gi, 'you'],
+    [/\bhath\b/gi, 'has'],
+    [/\bdoth\b/gi, 'does'],
+    [/\bart\b/gi, 'are'],
+    [/\bwast\b/gi, 'were'],
+    [/\bbestowest\b/gi, 'bestow'],
+    [/\bgrantest\b/gi, 'grant'],
+    [/\bgivest\b/gi, 'give'],
+    [/\bmakest\b/gi, 'make'],
+    [/\bknowest\b/gi, 'know'],
+    [/\bshinest\b/gi, 'shine'],
+    [/\bcomest\b/gi, 'come'],
+    [/\bgoest\b/gi, 'go'],
+    [/\bprotectest\b/gi, 'protect'],
+    [/\bruledst\b/gi, 'ruled'],
+    [/\bgiveth\b/gi, 'gives'],
+    [/\bmaketh\b/gi, 'makes'],
+    [/\bcometh\b/gi, 'comes'],
+    [/\bgoeth\b/gi, 'goes'],
+    [/\bshineth\b/gi, 'shines'],
+    [/\bunto\b/gi, 'to'],
+    [/\bverily\b/gi, 'truly'],
+    [/\baforetime\b/gi, 'in ancient times'],
+    [/\bwhoso\b/gi, 'whoever'],
+    [/\bthereof\b/gi, 'of it'],
+    [/\bwherewith\b/gi, 'with which'],
+    [/\bwherein\b/gi, 'in which'],
+    [/\btherein\b/gi, 'in that'],
+    [/\bspake\b/gi, 'spoke'],
+  ];
+
+  for (const [pattern, replacement] of replacements) {
+    text = text.replace(pattern, replacement);
+  }
+
+  return text;
+}
+
+function explainVedicDeityOrSubject(rawDeity?: string): string {
+  const clean = (rawDeity || '').replace(/\.$/, '').trim();
+  if (!clean) return 'the Vedic hymn tradition';
+  const lower = clean.toLowerCase();
+
+  if (lower.includes('agni')) {
+    return 'Agni (the sacred ritual fire, revered as the divine messenger between humanity and the gods)';
+  }
+  if (lower.includes('indra') && lower.includes('soma')) {
+    return 'Indra and Soma (the deities of heroic strength and sacred inspiration)';
+  }
+  if (lower.includes('indra')) {
+    return 'Indra (the Vedic deity of strength, thunder, and protection who overcomes obstacles)';
+  }
+  if (lower.includes('soma')) {
+    return 'Soma (the sacred ritual plant and deity representing vitality, inspiration, and spiritual clarity)';
+  }
+  if (lower.includes('ushas') || lower.includes('uṣas') || lower.includes('dawn')) {
+    return 'Ushas (the goddess of Dawn, symbolizing daily renewal, light, and the orderly rhythm of time)';
+  }
+  if (lower.includes('varuna') || lower.includes('varuṇa')) {
+    return 'Varuna (the sovereign deity who upholds cosmic, moral, and truthful order, known as Rita)';
+  }
+  if (lower.includes('mitra')) {
+    return 'Mitra (the deity of friendship, mutual trust, and sacred agreements)';
+  }
+  if (lower.includes('savit') || lower.includes('surya') || lower.includes('sūrya') || lower.includes('sun')) {
+    return `${clean} (the solar deity associated with illumination, life-giving warmth, and inner guidance)`;
+  }
+  if (lower.includes('brihaspati') || lower.includes('bṛhaspati') || lower.includes('brahmanaspati')) {
+    return 'Brihaspati (the lord of sacred prayer, wisdom, and wise counsel)';
+  }
+  if (lower.includes('vach') || lower.includes('vāk') || lower.includes('speech')) {
+    return 'Vak (sacred Speech personified as the creative and unifying power of wisdom)';
+  }
+  if (lower.includes('asvin') || lower.includes('aśvin')) {
+    return 'the Ashvins (the twin divine horsemen celebrated as healers and rescuers in times of distress)';
+  }
+  if (lower.includes('marut')) {
+    return 'the Maruts (the troop of storm-deities representing collective strength, wind, and life-bringing rain)';
+  }
+  if (lower.includes('parjanya') || lower.includes('rain') || lower.includes('frogs')) {
+    return 'Parjanya and the rain hymns (which celebrate life-sustaining rainfall, fertility, and the renewal of the earth)';
+  }
+  if (lower.includes('sarasvat')) {
+    return 'Sarasvati (the sacred river and goddess associated with nourishment, eloquence, and wisdom)';
+  }
+  if (lower.includes('pushan') || lower.includes('pūṣan')) {
+    return 'Pushan (the pastoral deity who guides travelers, guards pathways, and protects livestock)';
+  }
+  if (lower.includes('rudra')) {
+    return 'Rudra (the powerful deity of the storm and mountains, invoked for healing remedies and protection)';
+  }
+  if (lower.includes('yama') || lower.includes('pitri') || lower.includes('fathers')) {
+    return 'Yama (the lord of the departed who guides ancestors to the peaceful realm of the afterlife)';
+  }
+  if (lower.includes('visvedeva') || lower.includes('viśvedeva') || lower.includes('all-gods')) {
+    return 'the Vishvedevas (the assembly of all deities invoked together for communal harmony and shared blessing)';
+  }
+  if (lower.includes('ribhu') || lower.includes('ṛbhu')) {
+    return 'the Ribhus (skilled divine artisans praised for their craftsmanship, diligence, and excellence)';
+  }
+  if (lower.includes('herb') || lower.includes('oshadhi') || lower.includes('oṣadhi') || lower.includes('plant')) {
+    return 'the Oshadhis (medicinal herbs and healing plants revered as restorative mothers of health)';
+  }
+  if (lower.includes('water') || lower.includes('apas') || lower.includes('river') || lower.includes('sindhu')) {
+    return 'the sacred Waters and Rivers (Apas, praised as purifying, life-giving, and restorative forces of nature)';
+  }
+  if (lower.includes('creation') || lower.includes('prajapati') || lower.includes('purusha') || lower.includes('hiranyagarbha')) {
+    return `philosophical cosmology (${clean}, exploring the origin and structure of the universe)`;
+  }
+  if (lower.includes('liberality') || lower.includes('dakshin') || lower.includes('gift')) {
+    return 'Liberality and Dakshina (hymns praising generosity, charity, and mutual support within the community)';
+  }
+  return `${clean} (the Vedic deity or subject addressed in this hymn)`;
+}
+
+function summarizeVersePlainly(verse: RetrievedVerse): string {
+  const kbInstance = getKB();
+  const fullRec = kbInstance.verseIndex.get(verse.verse_id);
+  const wilsonRaw = fullRec?.wilson_translation ? cleanCorpusText(fullRec.wilson_translation) : '';
+  const griffithRaw = cleanCorpusText(verse.english_translation);
+
+  // Prefer Wilson when available and distinct because it is written in clearer explanatory prose
+  const baseText =
+    wilsonRaw && wilsonRaw.length > 20 && wilsonRaw.toLowerCase() !== griffithRaw.toLowerCase()
+      ? wilsonRaw
+      : griffithRaw;
+
+  let modern = modernizeVedicProse(baseText)
+    .replace(/\s*\([^)]*\)/g, '')
+    .replace(/^["'.,;:\s-]+|["'\s]+$/g, '')
+    .replace(/,(\s*,)+/g, ',')
+    .replace(/\s+,/g, ',')
+    .replace(/\s+;/g, ';')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (modern.length > 220) {
+    const cut = modern.slice(0, 220);
+    const lastPeriod = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf(';'), cut.lastIndexOf(','));
+    modern = (lastPeriod > 90 ? cut.slice(0, lastPeriod) : cut).trim() + '.';
+  } else if (!/[.!?]$/.test(modern)) {
+    modern += '.';
+  }
+  return /^I\b/.test(modern) ? modern : modern.charAt(0).toLowerCase() + modern.slice(1);
+}
+
+function getShortExcerpt(text: string, maxLen = 155): string {
+  const cleaned = cleanCorpusText(text).replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= maxLen) return cleaned;
+  const sub = cleaned.slice(0, maxLen);
+  const boundary = Math.max(sub.lastIndexOf(';'), sub.lastIndexOf(','), sub.lastIndexOf(' '));
+  return (boundary > 60 ? sub.slice(0, boundary) : sub).trim() + '...';
+}
+
+function formatCompactReferences(evidenceList: RetrievedVerse[]): string {
+  if (!evidenceList || evidenceList.length === 0) return 'None';
+  const top = evidenceList.slice(0, 3);
+  const groups = new Map<
+    string,
+    { mandala: number; sukta: number; verses: number[]; ids: string[]; deity: string }
+  >();
+  for (const v of top) {
+    const key = `${v.mandala}.${v.sukta}`;
+    const cleanDeity = (v.deity || '').replace(/\.$/, '').trim();
+    const existing = groups.get(key);
+    if (existing) {
+      if (!existing.verses.includes(v.verse)) existing.verses.push(v.verse);
+      if (!existing.ids.includes(v.verse_id)) existing.ids.push(v.verse_id);
+    } else {
+      groups.set(key, {
+        mandala: v.mandala,
+        sukta: v.sukta,
+        verses: [v.verse],
+        ids: [v.verse_id],
+        deity: cleanDeity,
+      });
+    }
+  }
+  return Array.from(groups.values())
+    .map((g) => {
+      const sortedV = [...g.verses].sort((a, b) => a - b);
+      const isConsecutive =
+        sortedV.length > 1 &&
+        sortedV.every((val, i) => i === 0 || val === sortedV[i - 1] + 1);
+      const verseLabel =
+        sortedV.length === 1
+          ? `${sortedV[0]}`
+          : isConsecutive
+          ? `${sortedV[0]}–${sortedV[sortedV.length - 1]}`
+          : sortedV.join(', ');
+      const idTags = g.ids.map((id) => `[${id}]`).join(', ');
+      return `Rig Veda ${g.mandala}.${g.sukta}.${verseLabel} ${idTags}${g.deity ? ` (${g.deity})` : ''}`;
+    })
+    .join('; ');
+}
+
+interface QuestionSynthesisProfile {
+  isDirectTextualQuery: boolean;
+  isIndirectContextual: boolean;
+  topicLabel: string;
+  directAnswerOpening: string;
+  explanationBridge: string;
+  contextualNote: string | null;
+  epistemicBoundary: string;
+}
+
+function analyzeQuestionForSynthesis(
+  question: string,
+  effectiveQuery: string,
+  evidenceList: RetrievedVerse[],
+  primaryTheme?: LifeThemeId | null
+): QuestionSynthesisProfile {
+  const qLower = question.toLowerCase().trim();
+  const effLower = effectiveQuery.toLowerCase().trim();
+  const combinedQ = `${qLower} ${effLower}`;
+  const primary = evidenceList[0];
+  const primaryDeityExplain = explainVedicDeityOrSubject(primary?.deity);
+
+  // Check if user is asking directly about a specific verse, sukta, or mandala
+  const asksSpecificRef =
+    /\b(?:rv|rig\s*veda)\s*\d+[\._:]\d+/i.test(question) ||
+    /\bmandala\s*\d+\s*,?\s*sukta\s*\d+/i.test(question) ||
+    /\bhymn\s*\d+[\._:]\d+/i.test(question) ||
+    /\bwhat\s+(?:happens|is\s+said|does\s+it\s+say)\s+in\s+(?:rv|rig\s*veda|mandala|hymn)/i.test(question);
+
+  // Check if user frames the question in modern / daily-life / indirect terms
+  const hasModernOrDailyFraming =
+    /\b(?:daily\s+life|modern|today|workplace|corporate|management|team|career|stress|anxiety|mental\s+health|habit|lifestyle|society|personal\s+growth|self\s+help|leadership|democratic|how\s+should\s+we|what\s+can\s+we\s+learn|apply|application|lesson)\b/i.test(
+      question
+    ) || Boolean(primaryTheme);
+
+  // Topical profiles that answer the user's exact topic in plain, formal, teacherly language
+  if (asksSpecificRef && primary) {
+    return {
+      isDirectTextualQuery: true,
+      isIndirectContextual: false,
+      topicLabel: `Rig Veda ${primary.mandala}.${primary.sukta}.${primary.verse}`,
+      directAnswerOpening: `Rig Veda ${primary.mandala}.${primary.sukta}.${primary.verse} is a verse addressed to ${primaryDeityExplain}. In plain terms, this passage teaches that ${summarizeVersePlainly(primary)}`,
+      explanationBridge: `Within the hymn context of Mandala ${primary.mandala}, Sukta ${primary.sukta}, the poet-seer invokes ${primaryDeityExplain} to express reverence, ritual devotion, and moral or cosmic order.`,
+      contextualNote: null,
+      epistemicBoundary:
+        'This passage should be understood within its ancient Vedic liturgical and poetic setting rather than as a modern technical or scientific statement.',
+    };
+  }
+
+  // 1. Leadership, Governance, Responsibility
+  if (/\b(?:leader|leadership|ruler|king|governance|authority|responsibility|guide|guidance|protector|gopa)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: false,
+      isIndirectContextual: true,
+      topicLabel: 'Leadership, Guidance, and Responsibility',
+      directAnswerOpening:
+        'The Rig Veda presents leadership in terms of wise guidance, protection, moral responsibility, and earning the trust of the community. Rather than viewing authority as mere power over others, the hymns suggest that a leader’s primary duty is to safeguard the people, foster unity, and uphold fairness and order.',
+      explanationBridge:
+        'In Vedic society, a leader or protector—often called a gopa (literally a guardian or herdsman who protects the community)—was expected to combine strength with wise counsel. Several hymns portray good governance through the example of both earthly rulers and protective deities such as Brihaspati (associated with wise counsel), Varuna (guardian of moral order), and Indra (protector of the people).',
+      contextualNote:
+        'Although the Rig Veda does not discuss leadership in modern organizational or daily-life terms, these passages can be understood contextually as reflecting timeless expectations of responsibility. In their original historical and religious setting, the verses describe kingship, priestly counsel, and divine guardianship, which by reasonable extension highlight the value of accountable, protective leadership.',
+      epistemicBoundary:
+        'The Rig Veda describes leadership through ancient kingship, priestly wisdom, and sacred guardianship; it does not formulate modern corporate management or political theory.',
+    };
+  }
+
+  // 2. Healing, Herbs, Medicine, Health
+  if (/\b(?:heal|healing|herb|herbs|medicine|medicinal|plant|plants|remedy|remedies|cure|disease|health|physician|oshadhi)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Healing Herbs and Restorative Remedies',
+      directAnswerOpening:
+        'The Rig Veda speaks with deep reverence about healing herbs (known as Oshadhis) and restorative natural remedies, describing plants as ancient, life-giving mothers that restore vitality and drive away illness. It also praises divine healers—such as the twin Ashvins, Rudra, and the purifying Waters—as sources of recovery and well-being.',
+      explanationBridge:
+        'Particularly in the famous Hymn to Herbs (Mandala 10, Sukta 97), the poet addresses medicinal plants as conscious, benevolent powers endowed with hundreds of restorative properties. The hymn portrays the traditional healer (bhishaj) gathering these plants to restore strength and free an afflicted person from infirmity.',
+      contextualNote: hasModernOrDailyFraming
+        ? 'Although these hymns reflect ancient Vedic herbal lore and ritual healing prayers rather than modern clinical medicine, they show a strong cultural appreciation for botanical knowledge, the role of the physician, and the connection between natural environments and human vitality.'
+        : null,
+      epistemicBoundary:
+        'While these verses document early Vedic traditions of herbal healing and prayer, they are historical and liturgical texts and do not constitute modern medical or clinical prescriptions.',
+    };
+  }
+
+  // 3. Friendship, Companionship, Trust, Harmony with Friends
+  if (/\b(?:friend|friendship|friends|companion|companionship|comrade|trust|loyalty|sakha|mitra)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Friendship, Mutual Trust, and Companionship',
+      directAnswerOpening:
+        'The Rig Veda places a high moral value on true friendship (sakhya), mutual trust, and loyalty, teaching that a genuine friend never abandons a companion in need and shares both wisdom and prosperity. It warns sharply against those who turn away from a loyal friend or speak insincerely.',
+      explanationBridge:
+        'In the Vedic worldview, friendship is both a human virtue and a sacred bond modeled by deities such as Mitra (whose very name means "Friend" or "Sacred Ally") and Agni, who is repeatedly addressed as the closest friend of the household. In Mandala 10, Sukta 71, sacred wisdom itself is said to be learned and refined within the fellowship of sincere friends.',
+      contextualNote: hasModernOrDailyFraming
+        ? 'Although the verses were composed for Vedic ritual and poetic fellowships, their reflections on loyalty, shared speech, and standing by one’s companions offer a clear contextual parallel to friendship and trust in everyday human relationships.'
+        : null,
+      epistemicBoundary:
+        'The text frames friendship through sacred alliances (Mitra), ritual fellowship, and hospitable generosity rather than modern social psychology.',
+    };
+  }
+
+  // 4. Marriage, Family, Household, Husband/Wife
+  if (/\b(?:marriage|wedding|married|husband|wife|bride|groom|family|household|children|domestic)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Marriage, Household Harmony, and Family Life',
+      directAnswerOpening:
+        'The Rig Veda portrays marriage and family life as a sacred lifelong partnership rooted in mutual affection, shared responsibility, and joyful harmony within the home. In the wedding hymn (Rig Veda 10.85), the bride and groom are blessed to remain united, grow old together in happiness, and rejoice with their children and grandchildren.',
+      explanationBridge:
+        'Mandala 10, Sukta 85 celebrates the archetypal marriage of Surya (the daughter of the Sun) and Soma, which became the foundation for traditional Vedic wedding blessings. The verses emphasize mutual respect between husband and wife, warmth toward the extended family, and a peaceful, welcoming household.',
+      contextualNote: hasModernOrDailyFraming
+        ? 'Although framed within ancient Vedic marriage rites and household traditions, these blessings express enduring human wishes for companionship, stability, and warmth in family life.'
+        : null,
+      epistemicBoundary:
+        'These verses reflect ancient Vedic wedding liturgy and household ideals rather than modern legal or sociological frameworks.',
+    };
+  }
+
+  // 5. Unity, Cooperation, Social Harmony, Community
+  if (/\b(?:unity|united|cooperat|harmony|together|community|concord|consensus|teamwork|collective|fellowship|samjnana)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Unity, Cooperation, and Shared Purpose',
+      directAnswerOpening:
+        'The Rig Veda strongly encourages unity, mutual cooperation, and harmony of purpose within a community. Its closing hymn (the Samjnana Sukta, Rig Veda 10.191) explicitly calls on people to walk together, speak with mutual respect, and align their minds and intentions so they may live and work in peace.',
+      explanationBridge:
+        'The Sanskrit term Samjnana refers to harmony or shared understanding. Rather than demanding blind uniformity, the Vedic poets emphasize that when members of a household or assembly gather with common goodwill and cooperative intention, their collective effort succeeds and discord is avoided.',
+      contextualNote: hasModernOrDailyFraming
+        ? 'While the original verses refer to ancient Vedic assemblies, shared offerings, and communal prayers, the underlying emphasis on shared purpose, respectful dialogue, and mutual support applies naturally as a contextual reflection on cooperation in daily life.'
+        : null,
+      epistemicBoundary:
+        'These hymns address ancient ritual and communal concord; connections to modern teamwork or civic institutions are contextual interpretations.',
+    };
+  }
+
+  // 6. Dawn (Ushas), Morning, Renewal, Time
+  if (/\b(?:dawn|ushas|morning|sunrise|daybreak|awakening|renewal)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Ushas (Dawn), Renewal, and the Order of Time',
+      directAnswerOpening:
+        'In the Rig Veda, Dawn—personified as the radiant goddess Ushas—is celebrated as the daily bringer of light, renewal, and purposeful activity. She drives away darkness and fear, awakens all living beings to their duties, and reminds humanity of the steady, lawful rhythm of time.',
+      explanationBridge:
+        'The hymns to Ushas are among the most poetic passages in the Rig Veda. She is described as a bright, ever-youthful figure who opens the gates of heaven each morning, inspiring birds to fly, workers to begin their labor, and seekers to offer their morning prayers in alignment with cosmic order (Rita).',
+      contextualNote: hasModernOrDailyFraming
+        ? 'When read in a broader life context, the imagery of Ushas serves as a natural metaphor for daily renewal, discipline, and mental clarity at the start of each day.'
+        : null,
+      epistemicBoundary:
+        'The hymns celebrate the Vedic deity Ushas and morning liturgy; personal productivity lessons drawn from them are interpretive reflections.',
+    };
+  }
+
+  // 7. Creation, Universe, Cosmology, Nasadiya, Origin
+  if (/\b(?:creation|universe|origin|beginning|cosmos|cosmology|nasadiya|existent|non-existent|purusha|hiranyagarbha|world\s+begin)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: true,
+      isIndirectContextual: false,
+      topicLabel: 'Creation and the Origin of the Universe',
+      directAnswerOpening:
+        'The Rig Veda explores the origin of the universe through profound philosophical inquiry rather than a single rigid dogma. Most famously, the Creation Hymn (Nasadiya Sukta, Rig Veda 10.129) describes a primordial state before existence and non-existence, suggesting that the cosmos emerged from a single self-sustaining reality through contemplative warmth (tapas) and desire (kama), while maintaining humble wonder before the ultimate mystery.',
+      explanationBridge:
+        'Across Mandala 10, the Vedic poet-philosophers approach creation from complementary angles: Sukta 129 reflects with philosophical humility on how the One breathed windless by its own power; Sukta 121 invokes Hiranyagarbha (the Golden Embryo) as the source of life and cosmic law; and Sukta 90 (the Purusha Sukta) envisions the universe as arising from the cosmic being Purusha.',
+      contextualNote: null,
+      epistemicBoundary:
+        'These hymns represent ancient philosophical and poetic cosmology and should not be conflated with modern astrophysical models.',
+    };
+  }
+
+  // 8. Speech, Communication, Truthful Words, Vak
+  if (/\b(?:speech|speak|speaking|word|words|voice|language|communication|dialogue|eloquence|vak|vach|truthful)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Sacred Speech (Vak) and Wise Communication',
+      directAnswerOpening:
+        'The Rig Veda treats speech (Vak) as a sacred, creative, and ethical power that must be used with truthfulness, wisdom, and care. It teaches that wise people refine their words thoughtfully—just as grain is sifted with a sieve—and that sincere, gentle speech builds fellowship and understanding.',
+      explanationBridge:
+        'In hymns such as Mandala 10, Sukta 71 (dedicated to sacred knowledge and speech) and Mandala 10, Sukta 125 (the Hymn of Vak), speech is celebrated both as a divine force that sustains the cosmos and as a human responsibility. Those who speak without understanding are compared to barren trees that bear no fruit, whereas thoughtful, truthful speech brings blessing and clarity.',
+      contextualNote: hasModernOrDailyFraming
+        ? 'Although composed around sacred poetic recitation and priestly wisdom, these verses offer a clear contextual parallel to ethical, thoughtful communication in everyday life.'
+        : null,
+      epistemicBoundary:
+        'In the Rig Veda, Vak primarily denotes sacred poetic and liturgical speech rather than modern communication theory.',
+    };
+  }
+
+  // 9. Generosity, Charity, Sharing, Wealth, Dakshina
+  if (/\b(?:generosity|generous|charity|giving|share|sharing|wealth|rich|poor|hunger|hungry|hospitality|liberality|dakshina)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Generosity, Charity, and Social Responsibility',
+      directAnswerOpening:
+        'The Rig Veda praises generosity and the sharing of wealth as essential moral duties, while condemning selfishness and the hoarding of food. In the Hymn to Liberality (Rig Veda 10.117), the text states plainly that wealth is constantly changing like the rolling wheels of a chariot, and that a person who eats alone without feeding the needy shares only in guilt.',
+      explanationBridge:
+        'Rather than viewing prosperity as purely private possession, the Vedic poets emphasize that wealth achieves its true purpose when it circulates to support guests, companions, and those suffering from hunger. Generous givers (praised through the concept of Dakshina, or charitable giving) are said to earn lasting goodwill and harmony within the community.',
+      contextualNote: hasModernOrDailyFraming
+        ? 'While the hymn is rooted in ancient Vedic hospitality and ritual gift-giving, its direct moral appeal to help the hungry and share one’s abundance speaks clearly to social responsibility in any era.'
+        : null,
+      epistemicBoundary:
+        'These verses express ancient ethical and hospitable norms rather than modern economic policy.',
+    };
+  }
+
+  // 10. Death, Afterlife, Ancestors, Yama, Funeral
+  if (/\b(?:death|die|dying|afterlife|heaven|ancestors|pitris|yama|funeral|mortal|immortality|soul|departed)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Mortality, Ancestors, and the Afterlife',
+      directAnswerOpening:
+        'In the Rig Veda, death is viewed not as complete annihilation, but as a peaceful journey toward the realm of light ruled by Yama (the first mortal to find the path for future generations) and the ancestors (Pitris). At the same time, the hymns encourage the living to cherish a full, healthy earthly life and turn back toward joy and duty.',
+      explanationBridge:
+        'The funeral hymns of Mandala 10 (especially Suktas 14 through 18) address the departed soul with gentleness, asking it to leave behind all imperfection and unite with the ancestors and the merit of its good deeds (ishtapurta). Simultaneously, the living mourners are gently called forward to embrace life, prosperity, and longevity.',
+      contextualNote: hasModernOrDailyFraming
+        ? 'Although these passages belong to ancient Vedic funerary liturgy, their balance between honoring the departed and affirming life offers a compassionate perspective on grief and remembrance.'
+        : null,
+      epistemicBoundary:
+        'These passages reflect early Vedic funerary hymns and ancestral beliefs rather than later systematic doctrines.',
+    };
+  }
+
+  // 11. Agriculture, Farming, Rain, Waters, Nature, Environment
+  if (/\b(?:agriculture|farming|plough|field|crops|harvest|rain|parjanya|water|waters|river|rivers|nature|earth|forest|environment|ecology|cattle|cows)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: hasModernOrDailyFraming,
+      topicLabel: 'Nature, Waters, Rain, and Agricultural Life',
+      directAnswerOpening:
+        'The Rig Veda expresses profound gratitude and reverence toward the natural world—celebrating life-giving Waters (Apas), seasonal rains (Parjanya), flowing rivers, forests, and honest agricultural labor as sacred sustains of life. Humanity is portrayed not as a conqueror of nature, but as a grateful participant living in harmony with natural cycles.',
+      explanationBridge:
+        'Across the hymns, natural forces are honored as living blessings: the Waters are invoked for purity and healing, Parjanya is praised for sending rain that nourishes every plant and creature, and agricultural hymns (such as Mandala 4, Sukta 57) bless the ploughshare, the soil, the oxen, and the farmer’s patient work.',
+      contextualNote: hasModernOrDailyFraming
+        ? 'Although the Rig Veda does not use modern ecological terminology, its deep reverence for clean waters, thriving forests, and seasonal balance provides a meaningful cultural foundation for environmental respect today.'
+        : null,
+      epistemicBoundary:
+        'The Vedic hymns express poetic and liturgical reverence for natural forces rather than modern environmental science.',
+    };
+  }
+
+  // 12. Mind, Inner Peace, Mental Clarity, Meditation, Wisdom, Learning
+  if (/\b(?:mind|mental|peace|calm|stress|anxiety|fear|clarity|thought|wisdom|knowledge|learning|study|meditat|gayatri|truth|rita|dharma|honesty)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: true,
+      topicLabel: 'Wisdom, Mental Clarity, and Truthful Order (Rita)',
+      directAnswerOpening:
+        'The Rig Veda emphasizes the cultivation of a clear, noble mind, the pursuit of illuminated understanding (Dhi), and living in alignment with truth and moral order (Rita). In its prayers—most notably the Gayatri Mantra (Rig Veda 3.62.10)—seekers ask for their intellect and thoughts to be guided toward clarity, righteousness, and inner steadiness.',
+      explanationBridge:
+        'In Vedic thought, human well-being depends on harmony between inner thought and outer cosmic law (Rita). Rather than treating knowledge as mere rote memorization, the hymns encourage active inquiry among the wise, discernment between truth and falsehood, and welcoming noble thoughts from every direction.',
+      contextualNote:
+        'Although the Rig Veda does not address modern psychological concepts such as clinical stress or anxiety in contemporary terms, its prayers for mental steadiness, clear judgment, and release from fear can be understood contextually as reflections on inner composure and ethical clarity.',
+      epistemicBoundary:
+        'These verses are ancient spiritual invocations for wisdom and moral order; they do not provide modern psychological or clinical therapy.',
+    };
+  }
+
+  // 13. Hardship, Adversity, Courage, Resilience, Obstacles
+  if (/\b(?:hardship|adversity|difficult|obstacle|struggle|courage|strength|brave|danger|distress|perseverance|resilience|overcome)\b/i.test(combinedQ)) {
+    return {
+      isDirectTextualQuery: !hasModernOrDailyFraming,
+      isIndirectContextual: true,
+      topicLabel: 'Courage, Perseverance, and Overcoming Hardship',
+      directAnswerOpening:
+        'The Rig Veda portrays hardship and obstacles as challenges to be crossed through steadfastness, courage, mutual support, and moral resolve. The hymns frequently use the imagery of a sturdy, well-built ship carrying travelers safely across perilous waters to describe how resilience and divine grace help people pass through times of distress.',
+      explanationBridge:
+        'In the Vedic hymns, obstacles—often symbolized by Vritra (that which blocks or holds back life-giving waters) or by dark, narrow straits (amhas)—are overcome through disciplined effort, prayer, and fortitude. Deities such as Indra and Agni are invoked as guardians who strengthen human resolve so that difficulties do not overwhelm the community.',
+      contextualNote:
+        'Although the ancient verses describe ritual invocations and heroic or pastoral perils rather than modern personal setbacks, their central metaphor—crossing troubled waters safely through steadiness and integrity—offers a clear contextual parallel to resilience in daily life.',
+      epistemicBoundary:
+        'The hymns express spiritual and poetic fortitude in an ancient setting rather than modern behavioral psychology.',
+    };
+  }
+
+  // Default dynamic synthesis for any other custom question framed by the user!
+  const secondary = evidenceList[1];
+  const primaryPlain = primary ? summarizeVersePlainly(primary) : '';
+  const secondaryPlain = secondary ? summarizeVersePlainly(secondary) : '';
+
+  const cleanTopic = question
+    .replace(/^(?:what|how|why|who|where|when)\s+(?:does|do|is|are|did|can|should)\s+(?:the\s+)?(?:rig\s*veda|rigveda|veda|vedas|hymns?|scriptures?|texts?)\s+(?:say|teach|explain|describe|tell\s+us|view|speak|mean)?\s*(?:about|on|regarding|concerning|of|for)?\s*/i, '')
+    .replace(/[?.!]+$/g, '')
+    .trim();
+
+  const readableTopic = cleanTopic && cleanTopic.length >= 3 && cleanTopic.length <= 75 ? cleanTopic : 'this subject';
+
+  return {
+    isDirectTextualQuery: !hasModernOrDailyFraming,
+    isIndirectContextual: hasModernOrDailyFraming,
+    topicLabel: readableTopic.charAt(0).toUpperCase() + readableTopic.slice(1),
+    directAnswerOpening: primary
+      ? `Regarding ${readableTopic}, the Rig Veda addresses this theme through hymns dedicated to ${primaryDeityExplain}. In the relevant passages, the text conveys that ${primaryPlain}${secondaryPlain ? ` Together with related verses, it also emphasizes that ${secondaryPlain}` : ''}`
+      : ABSTENTION_MESSAGE,
+    explanationBridge: primary
+      ? `In the context of Mandala ${primary.mandala}, Sukta ${primary.sukta}, the Vedic poet-seer invokes ${primaryDeityExplain} to express both sacred reverence and practical wisdom for human life.`
+      : '',
+    contextualNote: hasModernOrDailyFraming
+      ? `Although the Rig Veda does not state this idea in these exact modern terms, the retrieved passages can be understood contextually as reflecting how early Vedic poetry approached ${readableTopic} within its own historical and religious setting.`
+      : null,
+    epistemicBoundary:
+      'These passages reflect ancient Vedic poetic and liturgical traditions; broader modern applications should be understood as contextual interpretations rather than literal scriptural claims.',
+  };
+}
+
+export function buildStructuredTeacherAnswer(
+  question: string,
+  effectiveQuery: string,
+  evidenceList: RetrievedVerse[],
+  primaryTheme?: LifeThemeId | null
+): StructuredTeacherAnswer {
+  if (!evidenceList || evidenceList.length === 0) {
+    return {
+      direct_answer: ABSTENTION_MESSAGE,
+      explanation:
+        'No passages in the Rig Veda corpus (Mandalas 1–10) matched the specific requirements of this query with sufficient textual evidence.',
+      context: null,
+      textual_basis: ABSTENTION_MESSAGE,
+      references: 'None',
+      is_indirect_connection: false,
+    };
+  }
+
+  const asksSingleVerse =
+    /\b(?:rv|rig\s*veda)\s*\d+[\._:]\d+[\._:]\d+/i.test(question) ||
+    /\b\d+\.\d+\.\d+\b/.test(question) ||
+    /\bmandala\s*\d+\s*,?\s*sukta\s*\d+\s*,?\s*verse\s*\d+/i.test(question);
+
+  const profile = analyzeQuestionForSynthesis(question, effectiveQuery, evidenceList, primaryTheme);
+  const primary = evidenceList[0];
+  const secondary = !asksSingleVerse && evidenceList.length > 1 ? evidenceList[1] : null;
+  const tertiary = !asksSingleVerse && evidenceList.length > 2 ? evidenceList[2] : null;
+
+  const primaryPlain = summarizeVersePlainly(primary);
+  const secondaryPlain = secondary ? summarizeVersePlainly(secondary) : '';
+  const primaryDeityExplain = explainVedicDeityOrSubject(primary.deity);
+
+  // 1. DIRECT ANSWER (2–4 clear sentences answering the question in normal language)
+  const directAnswer = profile.directAnswerOpening;
+
+  // 2. SIMPLE EXPLANATION (1–2 short paragraphs in simple, formal language)
+  const para1 = asksSingleVerse
+    ? `${profile.explanationBridge} In this verse (Rig Veda ${primary.mandala}.${primary.sukta}.${primary.verse}), the speaker addresses the deity directly with praise and petition, establishing the spiritual focus of Sukta ${primary.sukta}.`
+    : `${profile.explanationBridge} Specifically, the primary passage (Rig Veda ${primary.mandala}.${primary.sukta}.${primary.verse}) conveys that ${primaryPlain}`;
+  let para2 = '';
+  if (secondary) {
+    const secondaryDeityExplain =
+      secondary.deity && secondary.deity !== primary.deity
+        ? ` (addressed to ${explainVedicDeityOrSubject(secondary.deity)})`
+        : '';
+    para2 = `This perspective is reinforced by Rig Veda ${secondary.mandala}.${secondary.sukta}.${secondary.verse}${secondaryDeityExplain}, which further explains that ${secondaryPlain} Taken together, these verses show how the Rig Veda connects sacred order with practical human conduct.`;
+  }
+  const explanation = para2 ? `${para1}\n\n${para2}` : para1;
+
+  // 3. CONTEXT / INDIRECT CONNECTION (only included when indirect/contextual)
+  const contextSection = profile.isIndirectContextual ? profile.contextualNote : null;
+
+  // 4. TEXTUAL BASIS (concise explanation + short supporting quotation with [RV_M_S_V] citations)
+  const textualParts: string[] = [];
+  textualParts.push(
+    `Rig Veda ${primary.mandala}.${primary.sukta}.${primary.verse} [${primary.verse_id}] states: "${getShortExcerpt(primary.english_translation)}"`
+  );
+  if (secondary) {
+    textualParts.push(
+      `Rig Veda ${secondary.mandala}.${secondary.sukta}.${secondary.verse} [${secondary.verse_id}] adds: "${getShortExcerpt(secondary.english_translation)}"`
+    );
+  }
+  if (tertiary) {
+    textualParts.push(
+      `See also Rig Veda ${tertiary.mandala}.${tertiary.sukta}.${tertiary.verse} [${tertiary.verse_id}]: "${getShortExcerpt(tertiary.english_translation, 110)}"`
+    );
+  }
+  const textualBasis = textualParts.join(' ');
+
+  // 5. REFERENCES (compact, unobtrusive)
+  const references = formatCompactReferences(asksSingleVerse ? [primary] : evidenceList);
+
+  // Determine 3-tier epistemic classification: 'direct' | 'inferred' | 'contextual'
+  const hasModernFraming =
+    /\b(?:daily\s+life|modern|today|workplace|corporate|management|team|career|stress|anxiety|mental\s+health|habit|lifestyle|society|personal\s+growth|self\s+help|leadership|democratic|apply|application|lesson|everyday|contemporary)\b/i.test(
+      question
+    ) || Boolean(primaryTheme);
+
+  const asksSpecificDeityOrHymn =
+    asksSingleVerse ||
+    /\b(?:rv|rig\s*veda)\s*\d+[\._:]\d+/i.test(question) ||
+    /\b(?:mandala|sukta)\s*\d+/i.test(question) ||
+    /\b(?:agni|indra|soma|varuna|mitra|ushas|ashvin|asvin|marut|parjanya|sarasvati|pushan|rudra|yama|ribhu|oshadhi|nasadiya|purusha|hiranyagarbha|samjnana|gayatri|savitar|surya|brihaspati|vak|vach)\b/i.test(
+      question
+    );
+
+  const interpretationType: 'direct' | 'inferred' | 'contextual' = hasModernFraming
+    ? 'contextual'
+    : asksSpecificDeityOrHymn && !profile.isIndirectContextual
+    ? 'direct'
+    : 'inferred';
+
+  const resolvedContext =
+    contextSection ||
+    (interpretationType === 'inferred'
+      ? `Although the Rig Veda is composed as liturgical poetry rather than a systematic treatise on ${profile.topicLabel.toLowerCase()}, this principle can reasonably be inferred from how the hymns portray sacred order and human conduct in their original Vedic setting.`
+      : `In its original liturgical setting in Mandala ${primary.mandala}, Sukta ${primary.sukta}, this verse directly addresses ${primaryDeityExplain}. Any broader modern or everyday application should be understood as a contextual reflection rather than a literal ancient claim.`);
+
+  const epistemicDistinction: EpistemicDistinction = {
+    direct: `In Rig Veda ${primary.mandala}.${primary.sukta}.${primary.verse} [${primary.verse_id}], the Vedic poet-seer directly invokes ${primaryDeityExplain} and states that ${primaryPlain}`,
+    inferred: `From this liturgical invocation and its imagery, one can reasonably infer the broader scriptural principle of ${profile.topicLabel.toLowerCase()} within Vedic ethical and sacred order.`,
+    contextual:
+      contextSection ||
+      `When applied to modern or daily life, connections to ${profile.topicLabel.toLowerCase()} should be understood as contextual reflections rather than literal ancient statements. ${profile.epistemicBoundary}`,
+  };
+
+  return {
+    direct_answer: directAnswer,
+    explanation,
+    context: resolvedContext,
+    textual_basis: textualBasis,
+    references,
+    is_indirect_connection: interpretationType !== 'direct',
+    interpretation_type: interpretationType,
+    epistemic_distinction: epistemicDistinction,
+  };
+}
+
+export function formatTeacherAnswerAsText(structured: StructuredTeacherAnswer): string {
+  if (structured.direct_answer === ABSTENTION_MESSAGE) {
+    return ABSTENTION_MESSAGE;
+  }
+  const sections: string[] = [
+    `Answer:\n${structured.direct_answer}`,
+    `Explanation:\n${structured.explanation}`,
+  ];
+  if (structured.context && structured.context.trim()) {
+    sections.push(`Context:\n${structured.context}`);
+  }
+  sections.push(`Textual basis:\n${structured.textual_basis}`);
+  sections.push(`References:\n${structured.references}`);
+  return sections.join('\n\n');
 }
 
 export function buildEpistemicLayers(
@@ -1838,39 +2776,20 @@ export function buildEpistemicLayers(
     };
   }
 
-  const cleanSnippet = (s: string) => s.trim().replace(/\s+/g, ' ');
+  const structured = buildStructuredTeacherAnswer(question, effectiveQuery, evidenceList, primaryTheme);
+  const profile = analyzeQuestionForSynthesis(question, effectiveQuery, evidenceList, primaryTheme);
   const primary = evidenceList[0];
   const secondary = evidenceList.length > 1 ? evidenceList[1] : null;
-
-  let textualEvidence = `In Mandala ${primary.mandala}, Sukta ${primary.sukta}, Verse ${primary.verse}, the text states: "${cleanSnippet(primary.english_translation)}" [${primary.verse_id}].`;
-  if (secondary) {
-    textualEvidence += ` Additionally, Mandala ${secondary.mandala}, Sukta ${secondary.sukta}, Verse ${secondary.verse} records: "${cleanSnippet(secondary.english_translation)}" [${secondary.verse_id}].`;
-  }
-
-  const inferredThemes = primaryTheme
-    ? [primaryTheme]
-    : detectLifeThemes(
-        `${question} ${effectiveQuery} ${primary.english_translation} ${secondary?.english_translation || ''}`
-      );
-  const activeTheme = inferredThemes[0] ? LIFE_THEMES[inferredThemes[0]] : null;
-
-  const themeLayer = activeTheme
-    ? `${activeTheme.label} (${activeTheme.sanskrit_concept}): ${activeTheme.description} Attested in [${primary.verse_id}]${secondary ? ` and [${secondary.verse_id}]` : ''}.`
-    : `Vedic Liturgical & Poetic Motif (${primary.deity || 'Hymnic Invocation'}): The retrieved passage [${primary.verse_id}] expresses devotional invocation, ritual order, and poetic praise within Mandala ${primary.mandala}.`;
-
-  const contemporaryLayer = activeTheme
-    ? `${activeTheme.contemporary_reflection} (Contextual reflection grounded in [${primary.verse_id}]).`
-    : `As a literary and philosophical reflection, [${primary.verse_id}] illustrates how early Vedic poetry framed human aspiration, reverence, and communal order—viewed here as cultural heritage rather than literal prescription.`;
-
-  const unsupportedLayer = activeTheme
-    ? activeTheme.epistemic_boundary
-    : 'The Rig Veda corpus cannot establish modern medical, psychological, clinical, or empirically validated scientific solutions, nor should poetic metaphors be treated as modern technical prescriptions.';
+  const citeTag = `[${primary.verse_id}]${secondary ? `, [${secondary.verse_id}]` : ''}`;
 
   return {
-    textual_evidence: textualEvidence,
-    theme: themeLayer,
-    contemporary_connection: contemporaryLayer,
-    unsupported_claim: unsupportedLayer,
+    textual_evidence: structured.textual_basis,
+    theme: `${profile.topicLabel}: ${structured.direct_answer} (${citeTag})`,
+    contemporary_connection:
+      structured.context
+        ? `${structured.context} (${citeTag})`
+        : `Read in context, ${citeTag} illustrates how the Rig Veda approaches ${profile.topicLabel.toLowerCase()} through poetic and liturgical wisdom rather than modern technical prescription.`,
+    unsupported_claim: profile.epistemicBoundary,
   };
 }
 
@@ -1887,14 +2806,15 @@ function generateMockAnswer(
     return ABSTENTION_MESSAGE;
   }
 
-  const layers = buildEpistemicLayers(question, effectiveQuery, evidenceList, primaryTheme);
-  return `${layers.textual_evidence} Thematic Context: ${layers.theme}`;
+  const structured = buildStructuredTeacherAnswer(question, effectiveQuery, evidenceList, primaryTheme);
+  return formatTeacherAnswerAsText(structured);
 }
 
 export interface GeminiStructuredValidationResult {
   isValid: boolean;
   abstained: boolean;
   layers: EpistemicLayers | null;
+  structuredAnswer?: StructuredTeacherAnswer | null;
   validCitations: string[];
   invalidCitations: string[];
   errors: string[];
@@ -1912,6 +2832,7 @@ export function validateGeminiStructuredResponse(
       isValid: false,
       abstained: false,
       layers: null,
+      structuredAnswer: null,
       validCitations: [],
       invalidCitations: [],
       errors: ['Empty response from Gemini'],
@@ -1932,6 +2853,7 @@ export function validateGeminiStructuredResponse(
       isValid: false,
       abstained: false,
       layers: null,
+      structuredAnswer: null,
       validCitations: [],
       invalidCitations: [],
       errors: ['Response is not valid JSON'],
@@ -1943,6 +2865,7 @@ export function validateGeminiStructuredResponse(
       isValid: false,
       abstained: false,
       layers: null,
+      structuredAnswer: null,
       validCitations: [],
       invalidCitations: [],
       errors: ['JSON root must be an object'],
@@ -1950,82 +2873,159 @@ export function validateGeminiStructuredResponse(
   }
 
   const record = parsed as Record<string, unknown>;
-  const requiredFields = [
-    'textual_evidence',
-    'theme',
-    'contemporary_connection',
-    'unsupported_claim',
-  ] as const;
 
-  const actualKeys = Object.keys(record);
-  if (
-    actualKeys.length !== requiredFields.length ||
-    !requiredFields.every((k) => Object.prototype.hasOwnProperty.call(record, k))
-  ) {
-    errors.push(
-      `JSON must contain exactly the four fields: ${requiredFields.join(', ')} (got: ${actualKeys.join(', ')})`
-    );
-  }
+  // Support both the new teacher schema (direct_answer, explanation, context, textual_basis, references)
+  // and the legacy 4-layer schema (textual_evidence, theme, contemporary_connection, unsupported_claim)
+  const isTeacherSchema =
+    typeof record.direct_answer === 'string' &&
+    typeof record.explanation === 'string' &&
+    typeof record.textual_basis === 'string';
 
-  for (const field of requiredFields) {
-    if (typeof record[field] !== 'string' || !String(record[field]).trim()) {
-      errors.push(`Field "${field}" must be a non-empty string`);
+  let layers: EpistemicLayers;
+  let structuredAnswer: StructuredTeacherAnswer | null = null;
+
+  if (isTeacherSchema) {
+    const directAnswer = String(record.direct_answer || '')
+      .replace(/\s*\[RV_\d+_\d+_\d+\]/g, '')
+      .trim();
+    const explanation = String(record.explanation || '').trim();
+    const contextVal = record.context ? String(record.context).trim() : '';
+    const textualBasis = String(record.textual_basis || '').trim();
+    const references = String(record.references || evidenceVerseIds.slice(0, 3).join(', ')).trim();
+    const rawInterpType = String(record.interpretation_type || '').toLowerCase().trim();
+    const unsupportedClaim = String(
+      record.unsupported_claim ||
+        'The Rig Veda is an ancient liturgical and poetic text; modern applications should be understood as contextual interpretations.'
+    ).trim();
+
+    if (!directAnswer || !explanation || !textualBasis) {
+      errors.push('Teacher schema fields direct_answer, explanation, and textual_basis must be non-empty');
     }
-  }
 
-  if (errors.length > 0) {
-    return {
-      isValid: false,
-      abstained: false,
-      layers: null,
-      validCitations: [],
-      invalidCitations: [],
-      errors,
+    // Prohibit modern management buzzwords presented as literal claims or category-header openings
+    if (
+      /\b(?:corporate\s+leadership|team\s+management|democratic\s+leadership)\b/i.test(directAnswer)
+    ) {
+      errors.push('direct_answer must not present modern management terminology as literal scriptural statements');
+    }
+    if (/^(?:leadership\s*&\s*responsibility|cooperation\s*&\s*unity|adversity\s*&\s*resilience|knowledge\s*&\s*learning|discipline\s*&\s*(?:cosmic\s*)?order|ethics\s*&\s*conduct)\s*\(/i.test(directAnswer)) {
+      errors.push('direct_answer must begin in ordinary teacherly prose, not with a preset category header');
+    }
+
+    const isIndirect =
+      Boolean(contextVal) &&
+      !contextVal.toLowerCase().startsWith('direct textual') &&
+      contextVal.toLowerCase() !== 'none';
+
+    const interpretationType: 'direct' | 'inferred' | 'contextual' =
+      rawInterpType === 'direct' || rawInterpType === 'inferred' || rawInterpType === 'contextual'
+        ? rawInterpType
+        : isIndirect
+        ? 'contextual'
+        : 'direct';
+
+    const rawDistinction =
+      record.epistemic_distinction && typeof record.epistemic_distinction === 'object'
+        ? (record.epistemic_distinction as Record<string, unknown>)
+        : null;
+    const epistemicDistinction: EpistemicDistinction = {
+      direct: String(rawDistinction?.direct || textualBasis).trim(),
+      inferred: String(rawDistinction?.inferred || explanation).trim(),
+      contextual: String(
+        rawDistinction?.contextual ||
+          (isIndirect ? contextVal : unsupportedClaim)
+      ).trim(),
+    };
+
+    const resolvedContextVal =
+      contextVal && contextVal.toLowerCase() !== 'none'
+        ? contextVal
+        : interpretationType === 'direct'
+        ? 'This passage is a direct scriptural statement from the Rig Veda hymn; any broader modern application should be understood as a contextual reflection.'
+        : unsupportedClaim;
+
+    structuredAnswer = {
+      direct_answer: directAnswer,
+      explanation,
+      context: resolvedContextVal,
+      textual_basis: textualBasis,
+      references,
+      is_indirect_connection: interpretationType !== 'direct',
+      interpretation_type: interpretationType,
+      epistemic_distinction: epistemicDistinction,
+    };
+
+    const firstCite = evidenceVerseIds[0] ? `[${evidenceVerseIds[0]}]` : '';
+    layers = {
+      textual_evidence: textualBasis.includes('RV_') ? textualBasis : `${textualBasis} ${firstCite}`.trim(),
+      theme: `${directAnswer} ${explanation}`,
+      contemporary_connection: isIndirect
+        ? contextVal
+        : `Read in its scriptural context (${firstCite}), this passage directly addresses the inquiry through Vedic hymnody.`,
+      unsupported_claim: unsupportedClaim,
+    };
+  } else {
+    const requiredFields = [
+      'textual_evidence',
+      'theme',
+      'contemporary_connection',
+      'unsupported_claim',
+    ] as const;
+
+    for (const field of requiredFields) {
+      if (typeof record[field] !== 'string' || !String(record[field]).trim()) {
+        errors.push(`Field "${field}" must be a non-empty string`);
+      }
+    }
+
+    if (errors.length > 0) {
+      return {
+        isValid: false,
+        abstained: false,
+        layers: null,
+        structuredAnswer: null,
+        validCitations: [],
+        invalidCitations: [],
+        errors,
+      };
+    }
+
+    layers = {
+      textual_evidence: String(record.textual_evidence).trim(),
+      theme: String(record.theme).trim(),
+      contemporary_connection: String(record.contemporary_connection).trim(),
+      unsupported_claim: String(record.unsupported_claim).trim(),
     };
   }
 
-  const layers: EpistemicLayers = {
-    textual_evidence: String(record.textual_evidence).trim(),
-    theme: String(record.theme).trim(),
-    contemporary_connection: String(record.contemporary_connection).trim(),
-    unsupported_claim: String(record.unsupported_claim).trim(),
-  };
-
   if (
     layers.textual_evidence.includes(ABSTENTION_MESSAGE) ||
-    layers.textual_evidence.toLowerCase().includes('could not find sufficient evidence')
+    layers.textual_evidence.toLowerCase().includes('could not find sufficient evidence') ||
+    (structuredAnswer &&
+      (structuredAnswer.direct_answer.includes(ABSTENTION_MESSAGE) ||
+        structuredAnswer.direct_answer.toLowerCase().includes('could not find sufficient evidence')))
   ) {
     return {
       isValid: true,
       abstained: true,
       layers,
+      structuredAnswer,
       validCitations: [],
       invalidCitations: [],
       errors: [],
     };
   }
 
-  const combinedText = `${layers.textual_evidence} ${layers.theme} ${layers.contemporary_connection} ${layers.unsupported_claim}`;
+  const combinedText = `${layers.textual_evidence} ${layers.theme} ${layers.contemporary_connection} ${layers.unsupported_claim} ${structuredAnswer?.references || ''}`;
 
-  // Ensure the four epistemic layers remain distinct
-  const distinctLayers = new Set([
-    layers.textual_evidence.toLowerCase(),
-    layers.theme.toLowerCase(),
-    layers.contemporary_connection.toLowerCase(),
-    layers.unsupported_claim.toLowerCase(),
-  ]);
-  if (distinctLayers.size < 4) {
-    errors.push('The four epistemic layers must remain distinct');
-  }
-
-  // Prohibit invented Sanskrit Devanagari script (only English translation evidence is supplied to the LLM)
+  // Prohibit invented Sanskrit Devanagari script
   if (/[\u0900-\u097F]/.test(combinedText)) {
     errors.push('Response contains invented Devanagari Sanskrit not present in the supplied English evidence');
   }
 
   // Extract all RV_M_S_V citations and any dot-format RV references across all fields
   const allFoundCitations = [...(combinedText.match(/RV_\d+_\d+_\d+/g) || [])];
-  const dotRefs = combinedText.match(/\bRV\s*(\d+)\.(\d+)\.(\d+)\b/gi) || [];
+  const dotRefs = combinedText.match(/\b(?:RV|Rig\s*Veda)\s*(\d+)\.(\d+)\.(\d+)\b/gi) || [];
   for (const ref of dotRefs) {
     const m = ref.match(/(\d+)\.(\d+)\.(\d+)/);
     if (m) {
@@ -2047,29 +3047,15 @@ export function validateGeminiStructuredResponse(
     errors.push(`Response cites non-retrieved or invented verse IDs: ${invalidCitations.join(', ')}`);
   }
 
-  // Every textual claim in textual_evidence must cite an actual retrieved RV_M_S_V verse ID
-  const textualCites = (layers.textual_evidence.match(/RV_\d+_\d+_\d+/g) || []).filter((c) =>
-    validSet.has(c)
-  );
-  if (textualCites.length === 0) {
-    errors.push('textual_evidence must cite at least one retrieved RV_M_S_V verse ID');
-  } else {
-    const textualSentences = layers.textual_evidence
-      .split(/(?<=[.!?])\s+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length >= 10);
-    for (const sentence of textualSentences) {
-      const sentenceCites = (sentence.match(/RV_\d+_\d+_\d+/g) || []).filter((c) => validSet.has(c));
-      if (sentenceCites.length === 0) {
-        errors.push(`Textual claim missing retrieved RV_M_S_V citation: "${sentence}"`);
-      }
-    }
+  if (validCitations.length === 0) {
+    errors.push('Response must cite at least one retrieved RV_M_S_V verse ID');
   }
 
   return {
     isValid: errors.length === 0,
     abstained: false,
     layers: errors.length === 0 ? layers : null,
+    structuredAnswer: errors.length === 0 ? structuredAnswer : null,
     validCitations,
     invalidCitations,
     errors,
@@ -2079,8 +3065,20 @@ export function validateGeminiStructuredResponse(
 export async function generateGeminiAnswer(
   prompt: string,
   systemInstruction = GROUNDED_SYSTEM_PROMPT,
-  temperature = DEFAULT_LLM_TEMPERATURE
-): Promise<{ text: string; layers: EpistemicLayers; modelUsed: string }> {
+  temperature = DEFAULT_LLM_TEMPERATURE,
+  enforcementOptions?: {
+    question?: string;
+    effectiveQuery?: string;
+    retrievedVerseIds?: string[];
+    expectedInterpretationType?: 'direct' | 'inferred' | 'contextual';
+  }
+): Promise<{
+  text: string;
+  layers: EpistemicLayers;
+  structuredAnswer: StructuredTeacherAnswer;
+  modelUsed: string;
+  enforcedSystemInstruction: string;
+}> {
   const apiKey = (process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '').trim();
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
     throw new Error('No valid GEMINI_API_KEY configured');
@@ -2095,47 +3093,109 @@ export async function generateGeminiAnswer(
     },
   });
 
-  const modelName = process.env.LLM_MODEL || 'gemini-flash-latest';
-  const response = await ai.models.generateContent({
-    model: modelName,
-    contents: prompt,
-    config: {
-      systemInstruction,
-      temperature,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          textual_evidence: {
-            type: Type.STRING,
-            description:
-              'What the retrieved verse translation literally says, generated ONLY from the supplied evidence. Every textual claim MUST cite an actual retrieved [RV_M_S_V] verse ID.',
-          },
-          theme: {
-            type: Type.STRING,
-            description:
-              'The Vedic or life-oriented theme supported by the retrieved verse(s), citing [RV_M_S_V].',
-          },
-          contemporary_connection: {
-            type: Type.STRING,
-            description:
-              'Clearly labeled interpretive reflection grounded in the retrieved verse(s), citing [RV_M_S_V].',
-          },
-          unsupported_claim: {
-            type: Type.STRING,
-            description:
-              'What the retrieved Rig Veda evidence cannot establish (e.g., no modern medical, psychological, clinical, or empirically validated scientific claims or unattested historical facts).',
-          },
-        },
-        required: [
-          'textual_evidence',
-          'theme',
-          'contemporary_connection',
-          'unsupported_claim',
-        ],
-      },
-    },
+  // Always inject the strictly enforced VedaWise system instruction on every LLM request
+  const enforcedSystemInstruction = buildEnforcedVedaWiseSystemInstruction({
+    ...enforcementOptions,
+    customInstruction: systemInstruction,
   });
+
+  const modelName = process.env.LLM_MODEL || 'gemini-3.8-flash';
+  const requestConfig = {
+    systemInstruction: enforcedSystemInstruction,
+    temperature,
+    responseMimeType: 'application/json',
+    responseSchema: {
+      type: Type.OBJECT,
+      properties: {
+        direct_answer: {
+          type: Type.STRING,
+          description:
+            '2-4 sentences directly answering the user question in clear, simple, formal English before giving verse citations.',
+        },
+        explanation: {
+          type: Type.STRING,
+          description:
+            '1-3 short paragraphs explaining the meaning in simple, formal language. Explain any Sanskrit or Vedic term immediately in plain English.',
+        },
+        context: {
+          type: Type.STRING,
+          description:
+            'If the connection to the user question is indirect, inferred, or contextual (e.g. modern terms like daily life, leadership, stress, or broader themes), explain clearly how the ancient passage relates contextually ("Although the Rig Veda does not state this idea in exactly these modern terms, the passage can be understood as reflecting..."). If the verse directly answers a specific textual question, return an empty string.',
+        },
+        textual_basis: {
+          type: Type.STRING,
+          description:
+            'Brief explanation or short quotation from the relevant retrieved passage(s), citing actual retrieved [RV_M_S_V] verse IDs.',
+        },
+        references: {
+          type: Type.STRING,
+          description:
+            'Compact grouped references supporting the answer, including [RV_M_S_V] IDs (e.g. "Rig Veda 10.191.2-4 [RV_10_191_2], [RV_10_191_3], [RV_10_191_4]").',
+        },
+        interpretation_type: {
+          type: Type.STRING,
+          description:
+            'Epistemic classification: "direct" (what the text directly says), "inferred" (what can reasonably be inferred from the passage), or "contextual" (a modern/contextual interpretation).',
+        },
+        epistemic_distinction: {
+          type: Type.OBJECT,
+          description:
+            'Explicit 3-way epistemic separation between direct textual meaning, reasonable inference, and modern/contextual interpretation.',
+          properties: {
+            direct: {
+              type: Type.STRING,
+              description: '1 sentence stating what the retrieved verse directly and literally says in its Vedic context.',
+            },
+            inferred: {
+              type: Type.STRING,
+              description: '1 sentence stating what broader principle can reasonably be inferred from the verse.',
+            },
+            contextual: {
+              type: Type.STRING,
+              description: '1 sentence explaining how modern or daily-life connections are contextual interpretations rather than literal statements.',
+            },
+          },
+          required: ['direct', 'inferred', 'contextual'],
+        },
+        unsupported_claim: {
+          type: Type.STRING,
+          description:
+            '1-2 sentences stating what the ancient text does not establish (distinguishing literal text from modern interpretation).',
+        },
+      },
+      required: [
+        'direct_answer',
+        'explanation',
+        'context',
+        'textual_basis',
+        'references',
+        'interpretation_type',
+        'epistemic_distinction',
+        'unsupported_claim',
+      ],
+    },
+  };
+
+  let activeModel = modelName;
+  let response;
+  try {
+    response = await ai.models.generateContent({
+      model: activeModel,
+      contents: prompt,
+      config: requestConfig,
+    });
+  } catch (firstErr) {
+    if (activeModel !== 'gemini-flash-latest') {
+      activeModel = 'gemini-flash-latest';
+      response = await ai.models.generateContent({
+        model: activeModel,
+        contents: prompt,
+        config: requestConfig,
+      });
+    } else {
+      throw firstErr;
+    }
+  }
 
   const rawText = (response.text || '').trim();
   if (!rawText) {
@@ -2148,35 +3208,75 @@ export async function generateGeminiAnswer(
     .trim();
 
   const parsed = JSON.parse(cleaned) as Record<string, unknown>;
-  const actualKeys = Object.keys(parsed || {});
-  const requiredFields = [
-    'textual_evidence',
-    'theme',
-    'contemporary_connection',
-    'unsupported_claim',
-  ] as const;
+  const directAnswer = String(parsed.direct_answer || '')
+    .replace(/\s*\[RV_\d+_\d+_\d+\]/g, '')
+    .trim();
+  const explanation = String(parsed.explanation || '').trim();
+  const contextVal = String(parsed.context || '').trim();
+  const textualBasis = String(parsed.textual_basis || '').trim();
+  const references = String(parsed.references || '').trim();
+  const rawInterpType = String(parsed.interpretation_type || '').toLowerCase().trim();
+  const unsupportedClaim = String(parsed.unsupported_claim || '').trim();
+  const rawDistinction =
+    parsed.epistemic_distinction && typeof parsed.epistemic_distinction === 'object'
+      ? (parsed.epistemic_distinction as Record<string, unknown>)
+      : null;
 
-  if (
-    !parsed ||
-    typeof parsed !== 'object' ||
-    Array.isArray(parsed) ||
-    actualKeys.length !== requiredFields.length ||
-    !requiredFields.every((k) => typeof parsed[k] === 'string' && String(parsed[k]).trim().length > 0)
-  ) {
-    throw new Error('Gemini response did not match the required 4-field JSON schema');
+  if (!directAnswer || !explanation || !textualBasis) {
+    throw new Error('Gemini response did not match the required teacher JSON schema');
   }
 
+  const isIndirect =
+    Boolean(contextVal) &&
+    !contextVal.toLowerCase().startsWith('direct textual') &&
+    contextVal.toLowerCase() !== 'none';
+
+  const interpretationType: 'direct' | 'inferred' | 'contextual' =
+    rawInterpType === 'direct' || rawInterpType === 'inferred' || rawInterpType === 'contextual'
+      ? rawInterpType
+      : isIndirect
+      ? 'contextual'
+      : 'direct';
+
+  const epistemicDistinction: EpistemicDistinction = {
+    direct: String(rawDistinction?.direct || textualBasis).trim(),
+    inferred: String(rawDistinction?.inferred || explanation).trim(),
+    contextual: String(
+      rawDistinction?.contextual ||
+        (isIndirect
+          ? contextVal
+          : 'Connections to modern daily life should be understood as contextual interpretations rather than literal scriptural claims.')
+    ).trim(),
+  };
+
+  const structuredAnswer: StructuredTeacherAnswer = {
+    direct_answer: directAnswer,
+    explanation,
+    context: isIndirect ? contextVal : null,
+    textual_basis: textualBasis,
+    references,
+    is_indirect_connection: isIndirect,
+    interpretation_type: interpretationType,
+    epistemic_distinction: epistemicDistinction,
+  };
+
   const layers: EpistemicLayers = {
-    textual_evidence: String(parsed.textual_evidence).trim(),
-    theme: String(parsed.theme).trim(),
-    contemporary_connection: String(parsed.contemporary_connection).trim(),
-    unsupported_claim: String(parsed.unsupported_claim).trim(),
+    textual_evidence: `${textualBasis} (${references})`.trim(),
+    theme: `${directAnswer} ${explanation}`,
+    contemporary_connection: isIndirect
+      ? contextVal
+      : `Direct scriptural explanation grounded in ${references}.`,
+    unsupported_claim:
+      unsupportedClaim ||
+      'The Rig Veda is an ancient liturgical and poetic corpus; modern applications are contextual interpretations.',
   };
 
   return {
-    text: JSON.stringify(layers),
+    text: cleaned,
     layers,
+    structuredAnswer,
     modelUsed: modelName,
+    enforcedSystemInstruction,
   };
 }
 
@@ -2533,7 +3633,7 @@ export async function runExplainablePipeline(params: {
   const apiKey = (process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '').trim();
   const hasValidApiKey = Boolean(apiKey && apiKey !== 'your_gemini_api_key_here');
   const shouldUseMock = useMock !== undefined ? useMock : !hasValidApiKey;
-  const configuredLlmModel = process.env.LLM_MODEL || 'gemini-flash-latest';
+  const configuredLlmModel = process.env.LLM_MODEL || 'gemini-3.8-flash';
   let modelUsed = shouldUseMock ? 'mock-llm-v1' : configuredLlmModel;
 
   const queryAnalysis = analyzeQuery(question, history, lifeTheme);
@@ -2656,7 +3756,7 @@ export async function runExplainablePipeline(params: {
     enableReranker,
     effectiveMandala,
     retrievalMode,
-    activeLifeTheme
+    lifeTheme
   );
   const retrievedVerses = trace.finalResults;
 
@@ -2723,11 +3823,13 @@ export async function runExplainablePipeline(params: {
   const humanSummary = generateHumanSummary(retrievalExplanations);
 
   if (retrievedVerses.length === 0 || !isEvidenceRelevant(effectiveQuery, retrievedVerses)) {
+    const emptyStructured = buildStructuredTeacherAnswer(question, effectiveQuery, [], activeLifeTheme);
     return {
       question,
       effective_query: effectiveQuery,
       query_analysis: queryAnalysis,
       answer: ABSTENTION_MESSAGE,
+      structured_answer: emptyStructured,
       epistemic_layers: buildEpistemicLayers(question, effectiveQuery, [], activeLifeTheme),
       evidence_status: 'insufficient',
       citations: [] as string[],
@@ -2745,12 +3847,19 @@ export async function runExplainablePipeline(params: {
     };
   }
 
+  const deterministicStructured = buildStructuredTeacherAnswer(
+    question,
+    effectiveQuery,
+    retrievedVerses,
+    activeLifeTheme
+  );
   const deterministicLayers = buildEpistemicLayers(
     question,
     effectiveQuery,
     retrievedVerses,
     activeLifeTheme
   );
+  let structuredAnswer: StructuredTeacherAnswer = deterministicStructured;
   let epistemicLayers: EpistemicLayers = deterministicLayers;
   const evidenceContext = buildContextBlock(retrievedVerses);
   const userPrompt = buildRagUserPrompt(question, effectiveQuery, evidenceContext, activeLifeTheme);
@@ -2758,10 +3867,20 @@ export async function runExplainablePipeline(params: {
 
   let rawAnswer = '';
   if (shouldUseMock) {
-    rawAnswer = generateMockAnswer(question, effectiveQuery, retrievedVerses, activeLifeTheme);
+    rawAnswer = formatTeacherAnswerAsText(deterministicStructured);
   } else {
     try {
-      const genRes = await generateGeminiAnswer(userPrompt);
+      const genRes = await generateGeminiAnswer(
+        userPrompt,
+        GROUNDED_SYSTEM_PROMPT,
+        DEFAULT_LLM_TEMPERATURE,
+        {
+          question,
+          effectiveQuery,
+          retrievedVerseIds: retrievedIds,
+          expectedInterpretationType: deterministicStructured.interpretation_type,
+        }
+      );
       modelUsed = genRes.modelUsed;
       const structuredValidation = validateGeminiStructuredResponse(genRes.text, retrievedIds);
 
@@ -2770,19 +3889,22 @@ export async function runExplainablePipeline(params: {
           'Gemini structured JSON failed validation, falling back to deterministic grounded synthesis:',
           structuredValidation.errors
         );
+        structuredAnswer = deterministicStructured;
         epistemicLayers = deterministicLayers;
-        rawAnswer = generateMockAnswer(question, effectiveQuery, retrievedVerses, activeLifeTheme);
+        rawAnswer = formatTeacherAnswerAsText(deterministicStructured);
         modelUsed = 'mock-llm-v1 (fallback)';
       } else if (structuredValidation.abstained) {
         rawAnswer = ABSTENTION_MESSAGE;
       } else if (structuredValidation.layers) {
         epistemicLayers = structuredValidation.layers;
-        rawAnswer = `${epistemicLayers.textual_evidence} Thematic Context: ${epistemicLayers.theme}`;
+        structuredAnswer = structuredValidation.structuredAnswer || deterministicStructured;
+        rawAnswer = formatTeacherAnswerAsText(structuredAnswer);
       }
     } catch (err) {
       console.warn('Live Gemini call failed, falling back to deterministic grounded synthesis:', err);
+      structuredAnswer = deterministicStructured;
       epistemicLayers = deterministicLayers;
-      rawAnswer = generateMockAnswer(question, effectiveQuery, retrievedVerses, activeLifeTheme);
+      rawAnswer = formatTeacherAnswerAsText(deterministicStructured);
       modelUsed = 'mock-llm-v1 (fallback)';
     }
   }
@@ -2803,6 +3925,7 @@ export async function runExplainablePipeline(params: {
       effective_query: effectiveQuery,
       query_analysis: queryAnalysis,
       answer: ABSTENTION_MESSAGE,
+      structured_answer: buildStructuredTeacherAnswer(question, effectiveQuery, [], activeLifeTheme),
       epistemic_layers: buildEpistemicLayers(question, effectiveQuery, [], activeLifeTheme),
       evidence_status: 'insufficient',
       citations: [] as string[],
@@ -2819,7 +3942,7 @@ export async function runExplainablePipeline(params: {
     };
   }
 
-  const combinedLayersText = `${epistemicLayers.textual_evidence} ${epistemicLayers.theme} ${epistemicLayers.contemporary_connection}`;
+  const combinedLayersText = `${epistemicLayers.textual_evidence} ${epistemicLayers.theme} ${epistemicLayers.contemporary_connection} ${structuredAnswer.references}`;
   const citationVal = validateCitations(combinedLayersText, retrievedIds);
   let claims = attributeClaims(rawAnswer, retrievedVerses, epistemicLayers);
   const evidenceStatus = evaluateSufficiency(
@@ -2854,6 +3977,7 @@ export async function runExplainablePipeline(params: {
     effective_query: effectiveQuery,
     query_analysis: queryAnalysis,
     answer: finalAnswer,
+    structured_answer: structuredAnswer,
     epistemic_layers: epistemicLayers,
     evidence_status: evidenceStatus,
     citations: validCitations,
@@ -2896,6 +4020,7 @@ export async function evaluateBenchmarkLive() {
     for (const q of answerable) {
       const t0 = performance.now();
       const rewritten = rewriteQueryDeterministic(q.question, q.context_history || []);
+      // Evaluate strictly blind: never pass ground-truth q.life_theme label into retriever
       const results = await knowledgeBase.retrieveHybrid(
         rewritten,
         10,
@@ -2904,7 +4029,7 @@ export async function evaluateBenchmarkLive() {
         useRerank,
         null,
         mode,
-        q.life_theme || null
+        null
       );
       latencies.push(performance.now() - t0);
 
@@ -2968,7 +4093,7 @@ export async function evaluateBenchmarkLive() {
   const hybridMetrics = await evaluateMode('hybrid', false);
   const rerankMetrics = await evaluateMode('hybrid_rerank', true);
 
-  // Evaluate abstention & citation accuracy
+  // Empirically evaluate abstention, citation precision, faithfulness, and unsupported claim rate
   let abstainedCorrectly = 0;
   for (const uq of unanswerable) {
     const rewritten = rewriteQueryDeterministic(uq.question, uq.context_history || []);
@@ -2981,6 +4106,44 @@ export async function evaluateBenchmarkLive() {
     (abstainedCorrectly / Math.max(1, unanswerable.length)).toFixed(4)
   );
 
+  let totalCitations = 0;
+  let validRetrievedCitations = 0;
+  let totalClaims = 0;
+  let supportedClaims = 0;
+  let unsupportedClaims = 0;
+  let coveredAnswers = 0;
+
+  for (const aq of answerable) {
+    const rewritten = rewriteQueryDeterministic(aq.question, aq.context_history || []);
+    const evidence = await knowledgeBase.retrieveHybrid(rewritten, 5, DEFAULT_CANDIDATE_K, DEFAULT_RRF_K, true, null, 'hybrid_rerank', null);
+    if (evidence.length === 0) continue;
+    const structured = buildStructuredTeacherAnswer(aq.question, rewritten, evidence, null);
+    const answerText = formatTeacherAnswerAsText(structured);
+    const verifiableBody = `${structured.direct_answer} ${structured.explanation} ${structured.textual_basis}`;
+    const claims = attributeClaims(verifiableBody, evidence);
+    const citedInAnswer = Array.from(new Set(answerText.match(/RV_\d+_\d+_\d+/g) || []));
+    const evidenceIds = new Set(evidence.map((e) => e.verse_id));
+    if (citedInAnswer.length > 0) coveredAnswers++;
+    for (const cId of citedInAnswer) {
+      totalCitations++;
+      if (evidenceIds.has(cId)) validRetrievedCitations++;
+    }
+    for (const cl of claims) {
+      if (cl.layer === 'unsupported_claim') continue;
+      totalClaims++;
+      if (cl.support_status === 'supported' || cl.support_status === 'partially_supported') {
+        supportedClaims++;
+      } else {
+        unsupportedClaims++;
+      }
+    }
+  }
+
+  const citationPrecision = totalCitations > 0 ? Number((validRetrievedCitations / totalCitations).toFixed(4)) : 1.0;
+  const citationCoverage = Number((coveredAnswers / Math.max(1, answerable.length)).toFixed(4));
+  const faithfulnessRate = totalClaims > 0 ? Number((supportedClaims / totalClaims).toFixed(4)) : 1.0;
+  const unsupportedRate = totalClaims > 0 ? Number((unsupportedClaims / totalClaims).toFixed(4)) : 0.0;
+
   const report = {
     available: true,
     timestamp: new Date().toISOString(),
@@ -2991,7 +4154,7 @@ export async function evaluateBenchmarkLive() {
     research_question:
       'Can an explainable hybrid RAG system reliably retrieve and contextualize life-oriented themes from the Rig Veda while minimizing hallucinations and unsupported interpretations?',
     benchmark_note:
-      'Metrics computed directly over the VedaWise Rig Veda benchmark dataset (Mandalas 1–10) comparing BM25, Dense, Hybrid RRF, and Hybrid RRF + Cross-Encoder Reranking.',
+      'Blind evaluation over the 92-question VedaWise Rig Veda benchmark (Mandalas 1–10) without label leakage or canonical verse pinning.',
     retrieval: {
       method: 'hybrid_rrf',
       ...hybridMetrics,
@@ -3003,15 +4166,15 @@ export async function evaluateBenchmarkLive() {
       max_ms: Number((hybridMetrics.avg_latency_ms * 2.1).toFixed(2)),
     },
     generation: {
-      citation_precision: 1.0,
-      citation_accuracy: 1.0,
-      citation_recall: hybridMetrics.recall_at_5,
-      citation_coverage: 1.0,
-      faithfulness: 1.0,
-      unsupported_claim_rate: 0.0,
+      citation_precision: citationPrecision,
+      citation_accuracy: citationPrecision,
+      citation_recall: rerankMetrics.recall_at_5,
+      citation_coverage: citationCoverage,
+      faithfulness: faithfulnessRate,
+      unsupported_claim_rate: unsupportedRate,
       abstention_accuracy: abstentionAcc,
-      thematic_grounding_rate: hybridMetrics.thematic_grounding_rate,
-      answer_correctness: Number(((hybridMetrics.recall_at_5 + abstentionAcc) / 2).toFixed(4)),
+      thematic_grounding_rate: rerankMetrics.thematic_grounding_rate,
+      answer_correctness: Number(((rerankMetrics.recall_at_5 + abstentionAcc) / 2).toFixed(4)),
     },
     method_comparison: {
       note: 'Ablation comparison across BM25 vs Dense vs Hybrid RRF on the VedaWise Rig Veda benchmark',
@@ -3057,7 +4220,8 @@ export async function startServer() {
     const kbOk =
       fs.existsSync(METADATA_JSON_PATH) ||
       fs.existsSync(COMPLETE_CORPUS_PATH) ||
-      fs.existsSync(COMPLETE_CORPUS_GZ_PATH);
+      fs.existsSync(COMPLETE_CORPUS_GZ_PATH) ||
+      fs.existsSync(COMPLETE_CORPUS_B64_PATH);
     const apiKey = (process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '').trim();
     const hasApiKey = Boolean(apiKey && apiKey !== 'your_gemini_api_key_here');
     res.json({
@@ -3313,6 +4477,7 @@ export async function startServer() {
 
       return res.json({
         answer: result.answer,
+        structured_answer: result.structured_answer,
         epistemic_layers: result.epistemic_layers,
         citations: result.citations,
         cited_verses: result.citations,
@@ -3398,9 +4563,11 @@ export async function startServer() {
 
   app.get('/api/verse/:verse_id', (req, res) => {
     let verseId = (req.params.verse_id || '').trim();
-    const dotMatch = verseId.match(/^(\d+)\.(\d+)\.(\d+)$/);
-    if (dotMatch) {
-      verseId = `RV_${parseInt(dotMatch[1], 10)}_${parseInt(dotMatch[2], 10)}_${parseInt(dotMatch[3], 10)}`;
+    const flexMatch = verseId.match(/^(?:rig\s*veda|rv)?[\s_.:-]*(\d+)[\s_.:-]+(\d+)[\s_.:-]+(\d+)$/i);
+    if (flexMatch) {
+      verseId = `RV_${parseInt(flexMatch[1], 10)}_${parseInt(flexMatch[2], 10)}_${parseInt(flexMatch[3], 10)}`;
+    } else {
+      verseId = verseId.toUpperCase();
     }
     if (!verseId || !verseId.startsWith('RV_')) {
       return res.status(400).json({ detail: 'Invalid verse ID. Use format RV_1_1_1 or 1.1.1' });

@@ -192,7 +192,12 @@ export function SearchPage({
       if (!res.ok) {
         setError(data.detail || data.error || 'Search failed.');
       } else {
-        setResults(data.results || []);
+        const nextResults: SearchResultVerse[] = data.results || [];
+        setResults(nextResults);
+        if (nextResults.length > 0) {
+          setLookedUpVerse(nextResults[0]);
+          setLookupInput(`${nextResults[0].mandala}.${nextResults[0].sukta}.${nextResults[0].verse}`);
+        }
       }
     } catch {
       setError('Network error while searching.');
@@ -206,6 +211,15 @@ export function SearchPage({
     setSelectedMandala(initialMandala ?? null);
     executeSearch(initialQuery, initialMandala ?? null, retrievalMode);
   }, [initialQuery, initialMandala]);
+
+  useEffect(() => {
+    fetch(`/api/verse/${encodeURIComponent('10.191.2')}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setLookedUpVerse(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -557,7 +571,9 @@ export function ScholarPage({
       explainable_res?: ChatResponseData;
     }>
   >([]);
-  const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [chatHistory, setChatHistory] = useState<
+    Array<{ role: 'user' | 'assistant'; content: string; cited_verses?: string[] }>
+  >([]);
   const [conversationId, setConversationId] = useState<string>('');
   const [inputText, setInputText] = useState<string>('');
   const [mandalaScope, setMandalaScope] = useState<number | null>(null);
@@ -569,10 +585,26 @@ export function ScholarPage({
   >({});
   const [loading, setLoading] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inFlightRef = useRef<boolean>(false);
+  const lastSubmittedInitialRef = useRef<string>('');
 
   // Evaluation Benchmark state
   const [evalReport, setEvalReport] = useState<EvaluationSummaryReport | null>(null);
   const [evalLoading, setEvalLoading] = useState<boolean>(false);
+  const [benchmarkQuestions, setBenchmarkQuestions] = useState<
+    Array<{
+      id: string;
+      question: string;
+      expected_verse_ids: string[];
+      question_type: string;
+      answerability: string;
+      life_theme?: LifeThemeId;
+      context_history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    }>
+  >([]);
+  const [benchmarkFilter, setBenchmarkFilter] = useState<
+    'all' | 'thematic' | 'conversational_followup' | 'direct_retrieval' | 'insufficient_evidence'
+  >('all');
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -582,9 +614,12 @@ export function ScholarPage({
     if (initialTheme) {
       setSelectedTheme(initialTheme);
     }
-    if (initialQuestion && initialQuestion.trim()) {
+    const cleanQ = (initialQuestion || '').trim();
+    const sig = `${cleanQ}::${initialTheme || ''}`;
+    if (cleanQ && lastSubmittedInitialRef.current !== sig) {
+      lastSubmittedInitialRef.current = sig;
       setActiveTab('rag');
-      submitQuestion(initialQuestion.trim(), initialTheme || selectedTheme);
+      submitQuestion(cleanQ, initialTheme || selectedTheme);
     }
   }, [initialQuestion, initialTheme]);
 
@@ -597,12 +632,21 @@ export function ScholarPage({
   const loadEvaluationSummary = async (forceRun = false) => {
     setEvalLoading(true);
     try {
-      const res = await fetch(forceRun ? '/api/evaluation/run' : '/api/evaluation/summary', {
-        method: forceRun ? 'POST' : 'GET',
-      });
+      const [res, qRes] = await Promise.all([
+        fetch(forceRun ? '/api/evaluation/run' : '/api/evaluation/summary', {
+          method: forceRun ? 'POST' : 'GET',
+        }),
+        benchmarkQuestions.length === 0 ? fetch('/api/evaluation/questions') : Promise.resolve(null),
+      ]);
       if (res.ok) {
         const data = await res.json();
         setEvalReport(data);
+      }
+      if (qRes && qRes.ok) {
+        const qData = await qRes.json();
+        if (Array.isArray(qData.questions)) {
+          setBenchmarkQuestions(qData.questions);
+        }
       }
     } catch {
       // ignore
@@ -617,11 +661,17 @@ export function ScholarPage({
     }
   }, [activeTab]);
 
-  const submitQuestion = async (q: string, themeOverride?: LifeThemeId | null) => {
+  const submitQuestion = async (
+    q: string,
+    themeOverride?: LifeThemeId | null,
+    historyOverride?: Array<{ role: 'user' | 'assistant'; content: string; cited_verses?: string[] }>
+  ) => {
     const trimmed = q.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || inFlightRef.current) return;
 
+    inFlightRef.current = true;
     const themeToUse = themeOverride !== undefined ? themeOverride : selectedTheme;
+    const historyToUse = historyOverride !== undefined ? historyOverride : chatHistory;
     setMessages((prev) => [...prev, { role: 'user', content: trimmed }]);
     setInputText('');
     setLoading(true);
@@ -633,7 +683,7 @@ export function ScholarPage({
         body: JSON.stringify({
           message: trimmed,
           conversation_id: conversationId || undefined,
-          history: chatHistory,
+          history: historyToUse,
           top_k: 5,
           mandala: mandalaScope,
           life_theme: themeToUse,
@@ -643,10 +693,10 @@ export function ScholarPage({
       });
       const data: ChatResponseData = await res.json();
       if (data.conversation_id) setConversationId(data.conversation_id);
-      setChatHistory((prev) => [
-        ...prev,
+      setChatHistory([
+        ...historyToUse,
         { role: 'user', content: trimmed },
-        { role: 'assistant', content: data.answer },
+        { role: 'assistant', content: data.answer, cited_verses: data.citations || [] },
       ]);
       setMessages((prev) => [
         ...prev,
@@ -667,6 +717,7 @@ export function ScholarPage({
         },
       ]);
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
   };
@@ -796,14 +847,7 @@ export function ScholarPage({
       {/* Header & Research Mode Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#DECBA8]">
         <div>
-          <div className="flex items-center gap-2 text-xs text-[#6E5648]">
-            <span className="font-semibold text-[#5B1612]">Ask VedaWise</span>
-            <span aria-hidden="true">·</span>
-            <span>Mandalas 1–10 (10,546 Verses)</span>
-            <span aria-hidden="true">·</span>
-            <span>Hybrid BM25 + Dense FAISS + RRF</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-[#430F0C] mt-1 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-[#430F0C] tracking-tight">
             Ask VedaWise
           </h1>
           <p className="text-sm text-[#5C493E] mt-0.5">
@@ -972,12 +1016,13 @@ export function ScholarPage({
               </span>
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  setSelectedTheme(null);
                   submitQuestion(
                     'Which Rig Veda verse scientifically proves that it cures diabetes?',
                     null
-                  )
-                }
+                  );
+                }}
                 disabled={loading}
                 className="w-full text-left px-3 py-2 rounded-lg bg-[#FFF5F5] hover:bg-[#FEEBEB] border border-red-200 text-xs font-medium text-red-900 transition-colors cursor-pointer"
               >
@@ -985,7 +1030,10 @@ export function ScholarPage({
               </button>
               <button
                 type="button"
-                onClick={() => submitQuestion('What does Mandala 15 say?', null)}
+                onClick={() => {
+                  setSelectedTheme(null);
+                  submitQuestion('What does Mandala 15 say?', null);
+                }}
                 disabled={loading}
                 className="w-full text-left px-3 py-2 rounded-lg bg-[#FFF5F5] hover:bg-[#FEEBEB] border border-red-200 text-xs font-medium text-red-900 transition-colors cursor-pointer"
               >
@@ -1072,63 +1120,151 @@ export function ScholarPage({
 
                 const res = msg.explainable_res;
                 const layers = res?.epistemic_layers;
-                const expVal = res?.explainability_validation;
+                const structured = res?.structured_answer;
                 const activeInspectorTab =
-                  inspectorTabByMsg[idx] || (showDebugPipeline ? 'pipeline' : 'summary');
+                  inspectorTabByMsg[idx] || (showDebugPipeline ? 'pipeline' : 'collapsed');
 
                 return (
                   <div key={idx} className="space-y-3 animate-message-enter">
                     {/* =========================================================
-                        PART 1: THE ACTUAL ANSWER (Warm Ivory-White Card)
+                        PART 1: THE ACTUAL ANSWER (Warm Ivory-White Teacher Card)
                        ========================================================= */}
                     <div className="rounded-2xl bg-[#FFFFFF] border-2 border-[#D8C39E] shadow-xs overflow-hidden">
                       {/* Answer Header */}
                       <div className="px-5 py-3 bg-[#FAF3E6] border-b border-[#E6D7BC] flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="px-2.5 py-0.5 rounded-md bg-[#5B1612] text-[#FFFDF9] text-xs font-semibold">
-                            Actual Answer
+                            VedaWise Answer
                           </span>
-                          {res?.query_analysis?.primary_theme && !res.abstained && (
-                            <span className="text-xs font-semibold text-[#5B1612] capitalize">
-                              · {res.query_analysis.primary_theme.replace(/_/g, ' ')}
+                          {!res?.abstained && structured?.interpretation_type === 'contextual' ? (
+                            <span className="px-2 py-0.5 rounded bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30 text-[11px] font-medium">
+                              Contextual Interpretation
                             </span>
-                          )}
+                          ) : !res?.abstained && structured?.interpretation_type === 'inferred' ? (
+                            <span className="px-2 py-0.5 rounded bg-[#EEF2FF] text-[#3730A3] border border-[#C7D2FE] text-[11px] font-medium">
+                              Reasonable Scriptural Inference
+                            </span>
+                          ) : !res?.abstained && structured?.is_indirect_connection ? (
+                            <span className="px-2 py-0.5 rounded bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30 text-[11px] font-medium">
+                              Contextual Interpretation
+                            </span>
+                          ) : !res?.abstained ? (
+                            <span className="px-2 py-0.5 rounded bg-[#EAF4EE] text-[#1E5638] border border-[#9EC5AE] text-[11px] font-medium">
+                              Direct Textual Evidence
+                            </span>
+                          ) : null}
                           {res?.retrieval?.query_rewritten && (
                             <span className="text-xs text-[#6E5648]">
                               · Follow-up: “{res.effective_query}”
                             </span>
                           )}
                         </div>
-
-                        {/* Cited Verses Pills */}
-                        {res && !res.abstained && res.citations.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {res.citations.map((citeId) =>
-                              renderClickableVerseRef(citeId, `header-${citeId}`)
-                            )}
-                          </div>
-                        )}
                       </div>
 
-                      {/* Cohesive Answer Body */}
-                      {layers && !res?.abstained ? (
-                        <div className="p-5 space-y-4">
-                          {/* Main Explanation in clean Inter 15px */}
-                          <div className="space-y-2.5 text-[15px] text-[#1F1612] leading-relaxed font-normal">
-                            <p>{renderTextWithCitations(layers.theme)}</p>
-                            <p className="text-[#3B2A22]">
-                              {renderTextWithCitations(layers.contemporary_connection)}
+                      {/* Structured Teacher Answer Body */}
+                      {(structured || layers) && !res?.abstained ? (
+                        <div className="p-5 sm:p-6 space-y-5 text-[#1F1612]">
+                          {/* 1. DIRECT ANSWER */}
+                          <div className="space-y-1.5">
+                            <div className="text-xs font-semibold uppercase tracking-wider text-[#5B1612]">
+                              Answer:
+                            </div>
+                            <p className="text-[15px] sm:text-[16px] text-[#1F1612] leading-relaxed font-normal">
+                              {renderTextWithCitations(
+                                structured?.direct_answer || layers?.theme || ''
+                              )}
                             </p>
                           </div>
 
-                          {/* Scriptural Quote Box in Source Sans 3 */}
-                          <div className="p-4 rounded-xl bg-[#FBF7EE] border-l-4 border-[#B6862C] border border-[#E8DAC0]">
-                            <div className="text-xs font-semibold text-[#5B1612] mb-1">
-                              Rig Veda Textual Evidence (Griffith Translation)
+                          {/* 2. SIMPLE EXPLANATION */}
+                          {structured?.explanation && (
+                            <div className="space-y-2 pt-3 border-t border-[#F2E8D5]">
+                              <div className="text-xs font-semibold uppercase tracking-wider text-[#5B1612]">
+                                Explanation:
+                              </div>
+                              <div className="space-y-2.5 text-[15px] text-[#2A1E19] leading-relaxed font-normal">
+                                {structured.explanation
+                                  .split(/\n\n+/)
+                                  .filter(Boolean)
+                                  .map((para, pIdx) => (
+                                    <p key={pIdx}>{renderTextWithCitations(para)}</p>
+                                  ))}
+                              </div>
                             </div>
-                            <div className="font-translation text-[15px] text-[#231610] leading-relaxed">
-                              {renderTextWithCitations(layers.textual_evidence)}
+                          )}
+
+                          {/* 3. CONTEXT / EPISTEMIC DISTINCTION */}
+                          {structured?.context && structured.context.trim().length > 0 && (
+                            <div className="p-4 rounded-xl bg-[#FDF9F0] border border-[#E6D7BC] space-y-2.5">
+                              <div className="text-xs font-semibold uppercase tracking-wider text-[#8A4B16]">
+                                Context:
+                              </div>
+                              <p className="text-[14.5px] text-[#3B2A22] leading-relaxed">
+                                {renderTextWithCitations(structured.context)}
+                              </p>
+                              {structured.epistemic_distinction && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2.5 border-t border-[#EADBC4]/80 text-xs">
+                                  <div className="p-2.5 rounded-lg bg-[#FFFDF9] border border-[#DFCDAE] space-y-1">
+                                    <span className="font-semibold text-[#1E5638] block">
+                                      Direct Meaning:
+                                    </span>
+                                    <p className="text-[#2D201A] leading-snug">
+                                      {renderTextWithCitations(structured.epistemic_distinction.direct)}
+                                    </p>
+                                  </div>
+                                  <div className="p-2.5 rounded-lg bg-[#FFFDF9] border border-[#DFCDAE] space-y-1">
+                                    <span className="font-semibold text-[#3730A3] block">
+                                      Inferred Principle:
+                                    </span>
+                                    <p className="text-[#2D201A] leading-snug">
+                                      {renderTextWithCitations(structured.epistemic_distinction.inferred)}
+                                    </p>
+                                  </div>
+                                  <div className="p-2.5 rounded-lg bg-[#FFFDF9] border border-[#DFCDAE] space-y-1">
+                                    <span className="font-semibold text-[#92400E] block">
+                                      Contextual Application:
+                                    </span>
+                                    <p className="text-[#2D201A] leading-snug">
+                                      {renderTextWithCitations(
+                                        structured.epistemic_distinction.contextual
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
+                          )}
+
+                          {/* 4. TEXTUAL BASIS */}
+                          <div className="p-4 rounded-xl bg-[#FBF7EE] border-l-4 border-[#B6862C] border border-[#E8DAC0] space-y-1.5">
+                            <div className="text-xs font-semibold uppercase tracking-wider text-[#5B1612]">
+                              Textual basis:
+                            </div>
+                            <div className="font-translation text-[14.5px] text-[#231610] leading-relaxed">
+                              {renderTextWithCitations(
+                                structured?.textual_basis || layers?.textual_evidence || ''
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 5. COMPACT REFERENCES */}
+                          <div className="pt-3 border-t border-[#EFE4CE] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <span className="text-xs font-semibold uppercase tracking-wider text-[#5B1612] mr-2">
+                                References:
+                              </span>
+                              <span className="text-xs text-[#4A382E]">
+                                {structured?.references || res?.citations.join(', ')}
+                              </span>
+                            </div>
+
+                            {res && res.citations.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {res.citations.map((citeId) =>
+                                  renderClickableVerseRef(citeId, `ref-${citeId}`, true)
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           {/* Contextual Follow-up Buttons */}
@@ -1140,7 +1276,10 @@ export function ScholarPage({
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => submitQuestion('What about the next verse?')}
+                                  onClick={() => {
+                                    setSelectedTheme(null);
+                                    submitQuestion('What about the next verse?', null);
+                                  }}
                                   disabled={loading}
                                   className="px-2.5 py-1 rounded-md bg-[#FBF7EE] hover:bg-[#5B1612] text-[#430F0C] hover:text-[#FFFDF9] border border-[#D8C39E] text-xs font-medium transition-colors cursor-pointer"
                                 >
@@ -1148,7 +1287,10 @@ export function ScholarPage({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => submitQuestion('What about the previous verse?')}
+                                  onClick={() => {
+                                    setSelectedTheme(null);
+                                    submitQuestion('What about the previous verse?', null);
+                                  }}
                                   disabled={loading}
                                   className="px-2.5 py-1 rounded-md bg-[#FBF7EE] hover:bg-[#5B1612] text-[#430F0C] hover:text-[#FFFDF9] border border-[#D8C39E] text-xs font-medium transition-colors cursor-pointer"
                                 >
@@ -1162,7 +1304,7 @@ export function ScholarPage({
                         /* Abstention State inside Actual Answer */
                         <div className="p-5 bg-[#FFF9F9] space-y-2">
                           <div className="text-xs font-semibold text-red-800">
-                            Abstained ({res?.abstention_reason || 'Outside Corpus Evidence Scope'})
+                            Insufficient Textual Evidence ({res?.abstention_reason || 'Outside Corpus Scope'})
                           </div>
                           <div className="text-[15px] text-[#231610] leading-relaxed">
                             {renderTextWithCitations(msg.content)}
@@ -1264,7 +1406,7 @@ export function ScholarPage({
                               }
                               className="px-2 py-1 rounded-md text-xs font-medium text-[#19442C] hover:bg-white/70 transition-colors cursor-pointer"
                             >
-                              {activeInspectorTab === 'collapsed' ? 'Expand' : 'Hide'}
+                              {activeInspectorTab === 'collapsed' ? 'Show Details' : 'Hide'}
                             </button>
                           </div>
                         </div>
@@ -1492,7 +1634,8 @@ export function ScholarPage({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                submitQuestion(inputText);
+                setSelectedTheme(null);
+                submitQuestion(inputText, null);
               }}
               className="flex gap-2 bg-[#FFFDF9] p-3 rounded-xl border-2 border-[#DECBA8] focus-within:border-[#9A3412] transition-colors shadow-2xs"
             >
@@ -1500,7 +1643,7 @@ export function ScholarPage({
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Ask about adversity, cooperation, knowledge, ethics, or follow up with 'What about the next verse?'..."
+                placeholder="Ask any question about the Rig Veda, deities, hymns, philosophy, or daily life..."
                 aria-label="Ask VedaWise a question"
                 className="flex-1 px-3.5 py-2 text-sm rounded-lg bg-[#FBF7EE] border border-[#D3BC94] text-[#231610] focus:outline-none focus:border-[#9A3412]"
               />
@@ -1647,6 +1790,92 @@ export function ScholarPage({
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {/* Interactive Benchmark Questions Explorer */}
+                {benchmarkQuestions.length > 0 && (
+                  <div className="pt-5 border-t border-[#EFE4CE] space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-cinzel text-sm font-bold text-[#430F0C]">
+                          Interactive Benchmark Dataset ({benchmarkQuestions.length} Questions)
+                        </h3>
+                        <p className="text-xs text-[#6E5648]">
+                          Click any benchmark question to test it live in Ask VedaWise.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {(
+                          [
+                            ['all', 'All'],
+                            ['thematic', 'Life Themes'],
+                            ['direct_retrieval', 'Direct'],
+                            ['conversational_followup', 'Follow-Up'],
+                            ['insufficient_evidence', 'Abstention'],
+                          ] as const
+                        ).map(([fKey, fLabel]) => (
+                          <button
+                            key={fKey}
+                            type="button"
+                            onClick={() => setBenchmarkFilter(fKey)}
+                            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                              benchmarkFilter === fKey
+                                ? 'bg-[#5B1612] text-[#FFFDF9]'
+                                : 'bg-[#F4ECE1] text-[#5C493E] hover:bg-[#E8D8BE]'
+                            }`}
+                          >
+                            {fLabel}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-96 overflow-y-auto pr-1">
+                      {benchmarkQuestions
+                        .filter((bq) =>
+                          benchmarkFilter === 'all' ? true : bq.question_type === benchmarkFilter
+                        )
+                        .slice(0, 24)
+                        .map((bq) => (
+                          <div
+                            key={bq.id}
+                            className="p-3 rounded-xl bg-[#FBF7EE] border border-[#DECBA8] flex items-center justify-between gap-3 text-xs"
+                          >
+                            <div className="space-y-1 min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-[#5B1612] uppercase">{bq.id}</span>
+                                <span className="px-1.5 py-0.5 rounded bg-[#F4ECE1] text-[#6E5648] text-[10px]">
+                                  {bq.question_type.replace(/_/g, ' ')}
+                                </span>
+                                {bq.expected_verse_ids?.length > 0 && (
+                                  <span className="text-[10px] text-[#1E5638] font-medium">
+                                    Expected: {bq.expected_verse_ids.join(', ')}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[#231610] font-medium truncate" title={bq.question}>
+                                “{bq.question}”
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveTab('rag');
+                                setSelectedTheme(bq.life_theme || null);
+                                if (Array.isArray(bq.context_history) && bq.context_history.length > 0) {
+                                  submitQuestion(bq.question, bq.life_theme || null, bq.context_history);
+                                } else {
+                                  submitQuestion(bq.question, bq.life_theme || null);
+                                }
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-[#5B1612] hover:bg-[#430F0C] text-[#FFFDF9] text-[11px] font-semibold shrink-0 transition-colors cursor-pointer"
+                            >
+                              Test →
+                            </button>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 )}
               </>

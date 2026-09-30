@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif;
+  --font-serif: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif;
+  --font-mono: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif;
+}
+
 @layer base {
   :root {
     --bg-parchment: #FBF7EE;
@@ -15,14 +21,30 @@
     --sage-green: #2B5B3F;
   }
 
+  html,
   body,
+  *,
   button,
   input,
   select,
   textarea,
   nav,
-  .font-inter {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-inter,
+  .font-cinzel,
+  .font-display,
+  .font-scholarly,
+  .font-serif-prose,
+  .font-translation,
+  .font-sans,
+  .font-serif,
+  .font-mono {
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif !important;
   }
 
   body {
@@ -32,30 +54,15 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Main headings: Inter SemiBold */
   h1,
   h2,
   .font-cinzel {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 600;
   }
 
-  /* Optional scholarly accent headings: Lora */
-  h3,
-  .font-display,
-  .font-scholarly {
-    font-family: 'Lora', Georgia, serif;
-  }
-
-  /* Verse translations: Source Sans 3 */
-  .font-serif-prose,
-  .font-translation {
-    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-
-  /* Sanskrit / Devanagari: Noto Sans Devanagari */
+  /* Sanskrit / Devanagari with Playfair Display + Noto Sans Devanagari fallback */
   .font-sanskrit {
-    font-family: 'Noto Sans Devanagari', sans-serif;
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif !important;
   }
 }
 

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { pipeline } from '@xenova/transformers';
@@ -12,6 +13,8 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const KB_DIR = path.join(ROOT_DIR, 'data', 'knowledge_base');
 
 const COMPLETE_CORPUS_PATH = path.join(KB_DIR, 'complete_rigveda_corpus.json');
+const COMPLETE_CORPUS_GZ_PATH = path.join(KB_DIR, 'complete_rigveda_corpus.json.gz');
+const COMPLETE_CORPUS_B64_PATH = path.join(KB_DIR, 'complete_rigveda_corpus.json.gz.b64');
 const METADATA_JSON_PATH = path.join(KB_DIR, 'metadata.json');
 const EMBEDDINGS_NPY_PATH = path.join(KB_DIR, 'embeddings.npy');
 const FAISS_INDEX_PATH = path.join(KB_DIR, 'faiss.index');
@@ -71,11 +74,19 @@ function createFaissIndexFlatIPBuffer(
 }
 
 async function main() {
-  if (!fs.existsSync(COMPLETE_CORPUS_PATH)) {
-    throw new Error(`Complete corpus not found at ${COMPLETE_CORPUS_PATH}`);
+  let rawText: string;
+  if (fs.existsSync(COMPLETE_CORPUS_PATH)) {
+    rawText = fs.readFileSync(COMPLETE_CORPUS_PATH, 'utf-8');
+  } else if (fs.existsSync(COMPLETE_CORPUS_GZ_PATH)) {
+    rawText = zlib.gunzipSync(fs.readFileSync(COMPLETE_CORPUS_GZ_PATH)).toString('utf-8');
+  } else if (fs.existsSync(COMPLETE_CORPUS_B64_PATH)) {
+    const b64 = fs.readFileSync(COMPLETE_CORPUS_B64_PATH, 'utf-8');
+    rawText = zlib.gunzipSync(Buffer.from(b64, 'base64')).toString('utf-8');
+  } else {
+    throw new Error(`Complete corpus not found at ${COMPLETE_CORPUS_PATH} (.gz.b64)`);
   }
 
-  const raw = JSON.parse(fs.readFileSync(COMPLETE_CORPUS_PATH, 'utf-8'));
+  const raw = JSON.parse(rawText);
   const mandalas = raw.mandalas || [];
 
   const metadata: Array<{

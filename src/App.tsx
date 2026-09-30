@@ -95,8 +95,11 @@ export default function App() {
 
   const handleQuickJump = (raw: string) => {
     const cleaned = raw.trim();
+    if (!cleaned) return;
 
-    const verseMatch = cleaned.match(/^(?:rv[_\s.]*)?(\d+)[._:\s]+(\d+)[._:\s]+(\d+)$/i);
+    const verseMatch = cleaned.match(
+      /^(?:rig\s*veda\s*|rv[_\s.]*|verse\s*)?(\d+)[._:\s-]+(\d+)[._:\s-]+(\d+)$/i
+    );
     if (verseMatch) {
       const m = parseInt(verseMatch[1], 10);
       const s = parseInt(verseMatch[2], 10);
@@ -107,7 +110,9 @@ export default function App() {
       }
     }
 
-    const hymnMatch = cleaned.match(/^(?:rv[_\s.]*)?(\d+)[._:\s]+(\d+)$/i);
+    const hymnMatch = cleaned.match(
+      /^(?:rig\s*veda\s*|rv[_\s.]*|hymn\s*|sukta\s*)?(\d+)[._:\s-]+(\d+)$/i
+    );
     if (hymnMatch) {
       const m = parseInt(hymnMatch[1], 10);
       const s = parseInt(hymnMatch[2], 10);
@@ -124,6 +129,14 @@ export default function App() {
         navigate({ page: 'mandala', mandala: m });
         return;
       }
+    }
+
+    if (
+      cleaned.endsWith('?') ||
+      /^(?:what|how|why|who|where|when|which|explain|tell\s+me|compare)\b/i.test(cleaned)
+    ) {
+      navigate({ page: 'scholar', initialQuestion: cleaned, initialTab: 'rag' });
+      return;
     }
 
     navigate({ page: 'search', initialQuery: cleaned });
@@ -146,7 +159,7 @@ export default function App() {
         <div
           key={`${route.page}-${'mandala' in route ? route.mandala : ''}-${
             'sukta' in route ? route.sukta : ''
-          }-${route.page === 'scholar' ? route.initialTab || 'rag' : ''}`}
+          }`}
           className="animate-page-enter"
         >
           {route.page === 'home' && <HomePage mandalas={mandalas} navigate={navigate} />}

@@ -109,3 +109,31 @@ def test_explainable_ai_invariants_and_ask_vedawise_questions():
     assert diabetes["abstained"] is True
     assert diabetes["retrieved_verses"] == []
 
+
+import unittest
+
+
+class TestVedaWiseSuite(unittest.TestCase):
+    def test_01_corpus_mandalas_1_to_10(self):
+        test_corpus_mandalas_1_to_10()
+
+    def test_02_life_theme_detection(self):
+        test_life_theme_detection()
+
+    def test_03_hybrid_retrieval_and_4_layer_answer(self):
+        test_hybrid_retrieval_and_4_layer_answer()
+
+    def test_04_conversational_followup_resolution(self):
+        test_conversational_followup_resolution()
+
+    def test_05_medical_and_scientific_abstention(self):
+        test_medical_and_scientific_abstention()
+
+    def test_06_explainable_ai_invariants_and_ask_vedawise_questions(self):
+        test_explainable_ai_invariants_and_ask_vedawise_questions()
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+

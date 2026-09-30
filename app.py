@@ -95,6 +95,26 @@ def render_response(res: dict, show_debug: bool) -> None:
     if res.get("resolution_note"):
         st.info(f"Context Resolution: {res['resolution_note']}")
 
+    structured = res.get("structured_answer")
+    if structured and not res.get("abstained"):
+        st.subheader("VedaWise Answer")
+        st.markdown(f"**Answer:**\n{structured.get('direct_answer', '')}")
+        st.markdown(f"**Explanation:**\n{structured.get('explanation', '')}")
+        if structured.get("context"):
+            st.markdown(f"**Context:**\n{structured.get('context', '')}")
+        distinction = structured.get("epistemic_distinction")
+        if distinction:
+            d1, d2, d3 = st.columns(3)
+            with d1:
+                st.caption(f"**Direct Meaning:** {distinction.get('direct', '')}")
+            with d2:
+                st.caption(f"**Inferred Principle:** {distinction.get('inferred', '')}")
+            with d3:
+                st.caption(f"**Contextual Application:** {distinction.get('contextual', '')}")
+        st.markdown(f"**Textual basis:**\n{structured.get('textual_basis', '')}")
+        st.markdown(f"**References:** {structured.get('references', '')}")
+        st.divider()
+
     layers = res.get("epistemic_layers", {})
     c1, c2 = st.columns(2)
     with c1:

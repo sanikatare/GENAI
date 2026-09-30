@@ -12,6 +12,8 @@ Modular Research Architecture:
 
 from __future__ import annotations
 
+import base64
+import gzip
 import json
 import math
 import os
@@ -26,7 +28,11 @@ from typing import Any, Dict, List, Optional, Tuple
 ROOT_DIR = Path(__file__).resolve().parent.parent
 KB_DIR = ROOT_DIR / "data" / "knowledge_base"
 COMPLETE_CORPUS_PATH = KB_DIR / "complete_rigveda_corpus.json"
+COMPLETE_CORPUS_GZ_PATH = KB_DIR / "complete_rigveda_corpus.json.gz"
+COMPLETE_CORPUS_B64_PATH = KB_DIR / "complete_rigveda_corpus.json.gz.b64"
 FAISS_INDEX_PATH = KB_DIR / "faiss.index"
+FAISS_INT8_GZ_PATH = KB_DIR / "faiss.int8.bin.gz"
+FAISS_INT8_B64_PATH = KB_DIR / "faiss.int8.bin.gz.b64"
 EMBEDDINGS_NPY_PATH = KB_DIR / "embeddings.npy"
 KB_CONFIG_PATH = KB_DIR / "kb_config.json"
 CORPUS_JSONL_PATH = ROOT_DIR / "data" / "processed" / "rigveda_corpus.jsonl"
@@ -34,6 +40,39 @@ BENCHMARK_JSON_PATH = ROOT_DIR / "data" / "evaluation" / "benchmark_questions.js
 DEFAULT_EMBEDDING_MODEL = os.environ.get(
     "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 ).strip()
+
+GROUNDED_SYSTEM_PROMPT = """You are VedaWise, an AI assistant designed to answer questions about ancient Indian texts, scriptures, philosophy, culture, and related knowledge, grounded strictly in the provided English translation corpus of the Rig Veda (Mandalas 1–10).
+
+Your priority is to provide answers that are FORMAL, SIMPLE, CLEAR, and EASY FOR A NORMAL USER TO UNDERSTAND.
+Do NOT make the answer look like a research paper or technical database output.
+
+ANSWER STRUCTURE:
+1. DIRECT ANSWER ("direct_answer"): Start with a short, clear answer (2–4 sentences) to the user's exact question in normal language before giving supporting details.
+2. SIMPLE EXPLANATION ("explanation"): Explain the meaning in 1–3 short paragraphs using simple but formal language. Explain any important Sanskrit term immediately in simple language.
+3. CONTEXT / INDIRECT CONNECTION ("context"): If the text does not directly answer the exact wording of the user's question, state clearly that the idea can be understood indirectly, by inference, or contextually ("Although the Rig Veda does not state this idea in exactly these modern terms, the passage can be understood as reflecting...").
+4. TEXTUAL EVIDENCE ("textual_basis"): Only after explaining the answer, provide a brief explanation or short quotation from the relevant passage(s) citing retrieved [RV_M_S_V] IDs.
+5. REFERENCES ("references"): Keep references compact, unobtrusive, and grouped together when multiple verses support the same idea.
+
+EPISTEMIC DISTINCTION RULES:
+Strictly distinguish between:
+(a) Direct knowledge ("direct"): What the text directly and literally says.
+(b) Inferred knowledge ("inferred"): What can reasonably be inferred from the passage.
+(c) Contextual knowledge ("contextual"): A modern or daily-life contextual interpretation/application.
+Never attribute modern terminology ("management", "corporate leadership", "democratic leadership", "team management") as literal scriptural statements."""
+
+
+def build_enforced_system_instruction(
+    expected_interpretation_type: str = "inferred",
+    allowed_verse_ids: Optional[List[str]] = None,
+) -> str:
+    allowed = ", ".join(allowed_verse_ids) if allowed_verse_ids else "retrieved corpus verses only"
+    return (
+        f"{GROUNDED_SYSTEM_PROMPT}\n\n"
+        f"MANDATORY RUNTIME ENFORCEMENT:\n"
+        f"- Detected Epistemic Mode: {expected_interpretation_type}\n"
+        f"- Allowed Citation IDs: [{allowed}]\n"
+        f"- Output must strictly follow: Answer, Explanation, Context (when indirect/contextual), Textual basis, References."
+    )
 
 STOPWORDS = {
     "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
@@ -197,6 +236,8 @@ def check_epistemic_boundary(query: str) -> Dict[str, Any]:
 class VedaWiseEngine:
     """Modular Hybrid BM25 + Dense Vector + RRF + Reranker + Explainable RAG Engine."""
 
+    _SHARED_STATE: Optional[Dict[str, Any]] = None
+
     def __init__(self, corpus_path: Path = COMPLETE_CORPUS_PATH):
         self.corpus_path = corpus_path
         self.verses: List[Dict[str, Any]] = []
@@ -211,12 +252,54 @@ class VedaWiseEngine:
         self._faiss_vectors: Optional[array] = None
         self._st_model: Any = None
         self._query_cache: Dict[str, List[float]] = {}
-        self._load_and_index()
+        if VedaWiseEngine._SHARED_STATE is not None and corpus_path == COMPLETE_CORPUS_PATH:
+            st = VedaWiseEngine._SHARED_STATE
+            self.verses = st["verses"]
+            self.verse_by_id = st["verse_by_id"]
+            self.doc_tokens = st["doc_tokens"]
+            self.doc_freqs = st["doc_freqs"]
+            self.doc_lens = st["doc_lens"]
+            self.avgdl = st["avgdl"]
+            self.embedding_model_name = st["embedding_model_name"]
+            self.embedding_dim = st["embedding_dim"]
+            self.faiss_ntotal = st["faiss_ntotal"]
+            self._faiss_vectors = st["faiss_vectors"]
+            self._st_model = st["st_model"]
+            self._query_cache = st["query_cache"]
+        else:
+            self._load_and_index()
+            if corpus_path == COMPLETE_CORPUS_PATH:
+                VedaWiseEngine._SHARED_STATE = {
+                    "verses": self.verses,
+                    "verse_by_id": self.verse_by_id,
+                    "doc_tokens": self.doc_tokens,
+                    "doc_freqs": self.doc_freqs,
+                    "doc_lens": self.doc_lens,
+                    "avgdl": self.avgdl,
+                    "embedding_model_name": self.embedding_model_name,
+                    "embedding_dim": self.embedding_dim,
+                    "faiss_ntotal": self.faiss_ntotal,
+                    "faiss_vectors": self._faiss_vectors,
+                    "st_model": self._st_model,
+                    "query_cache": self._query_cache,
+                }
 
     def _load_and_index(self) -> None:
-        if COMPLETE_CORPUS_PATH.exists():
-            with open(COMPLETE_CORPUS_PATH, "r", encoding="utf-8") as f:
-                raw = json.load(f)
+        if (
+            COMPLETE_CORPUS_PATH.exists()
+            or COMPLETE_CORPUS_GZ_PATH.exists()
+            or COMPLETE_CORPUS_B64_PATH.exists()
+        ):
+            if COMPLETE_CORPUS_PATH.exists():
+                with open(COMPLETE_CORPUS_PATH, "r", encoding="utf-8") as f:
+                    raw = json.load(f)
+            elif COMPLETE_CORPUS_GZ_PATH.exists():
+                raw_bytes = gzip.decompress(COMPLETE_CORPUS_GZ_PATH.read_bytes())
+                raw = json.loads(raw_bytes.decode("utf-8"))
+            else:
+                b64_text = COMPLETE_CORPUS_B64_PATH.read_text(encoding="utf-8").strip()
+                raw_bytes = gzip.decompress(base64.b64decode(b64_text))
+                raw = json.loads(raw_bytes.decode("utf-8"))
             idx = 0
             for m_rec in raw.get("mandalas", []):
                 for h_rec in m_rec.get("hymns", []):
@@ -293,6 +376,21 @@ class VedaWiseEngine:
                     self.faiss_ntotal = ntotal
                     return
 
+        if FAISS_INT8_GZ_PATH.exists() or FAISS_INT8_B64_PATH.exists():
+            if FAISS_INT8_GZ_PATH.exists():
+                gz_buf = FAISS_INT8_GZ_PATH.read_bytes()
+            else:
+                b64_text = FAISS_INT8_B64_PATH.read_text(encoding="utf-8").strip()
+                gz_buf = base64.b64decode(b64_text)
+            raw_buf = gzip.decompress(gz_buf)
+            if len(raw_buf) >= expected_floats:
+                int8_vals = array("b")
+                int8_vals.frombytes(raw_buf[:expected_floats])
+                vecs = array("f", (x / 127.0 for x in int8_vals))
+                self._faiss_vectors = vecs
+                self.faiss_ntotal = expected_count
+                return
+
         if EMBEDDINGS_NPY_PATH.exists():
             with open(EMBEDDINGS_NPY_PATH, "rb") as f:
                 buf = f.read()
@@ -347,15 +445,18 @@ class VedaWiseEngine:
         top_k: int = 25,
         mandala_filter: Optional[int] = None,
         life_theme: Optional[str] = None,
+        pure_lexical: bool = False,
     ) -> List[Dict[str, Any]]:
         q_tokens = preprocess_text(query)
         detected = detect_life_themes(query, life_theme)
         theme_tokens: List[str] = []
         canonical_ids = set()
-        for tid in detected:
-            meta = LIFE_THEMES[tid]
-            theme_tokens.extend(preprocess_text(" ".join(meta["expansion_terms"])))
-            canonical_ids.update(meta["canonical_verses"])
+        if not pure_lexical:
+            for tid in detected:
+                meta = LIFE_THEMES[tid]
+                theme_tokens.extend(preprocess_text(" ".join(meta["expansion_terms"])))
+                if life_theme:
+                    canonical_ids.update(meta["canonical_verses"])
 
         all_tokens = list(dict.fromkeys(q_tokens + theme_tokens))
         if not all_tokens:
@@ -383,10 +484,10 @@ class VedaWiseEngine:
                 df = self.doc_freqs.get(qt, 0)
                 idf = math.log(1.0 + (N - df + 0.5) / (df + 0.5))
                 denom = tf + k1 * (1.0 - b + b * (dl / self.avgdl))
-                weight = 1.0 if qt in q_tokens else 0.42
+                weight = 1.0 if qt in q_tokens else 0.35
                 score += weight * idf * ((tf * (k1 + 1.0)) / denom)
-            if rec["verse_id"] in canonical_ids:
-                score += 4.2
+            if rec["verse_id"] in canonical_ids and score > 0:
+                score += 2.5
             if score > 0:
                 scored.append((idx, score))
 
@@ -615,35 +716,85 @@ class VedaWiseEngine:
         second_v = verses[1] if len(verses) > 1 else None
         theme_meta = LIFE_THEMES.get(detected_themes[0]) if detected_themes else None
 
+        q_lower = question.lower()
+        has_modern_framing = bool(
+            re.search(
+                r"\b(daily life|modern|today|workplace|corporate|management|team|career|stress|anxiety|habit|lifestyle|apply|application|lesson|everyday)\b",
+                q_lower,
+            )
+            or life_theme
+        )
+        asks_specific_ref = bool(
+            re.search(r"\b(?:rv|rig\s*veda)\s*\d+[\._:]\d+", q_lower)
+            or re.search(r"\b(?:mandala|sukta)\s*\d+", q_lower)
+        )
+        interpretation_type = (
+            "contextual"
+            if has_modern_framing
+            else ("direct" if asks_specific_ref else "inferred")
+        )
+
+        deity_name = (top_v.get("deity") or "Vedic deities").rstrip(".")
+        if theme_meta:
+            direct_answer = (
+                f"The Rig Veda addresses {theme_meta['label'].lower()} through {theme_meta['description'].lower()} "
+                f"Rather than presenting modern technical definitions, the hymns express these ideas through sacred responsibility, guidance, and communal harmony."
+            )
+            explanation_str = (
+                f"In its original historical and religious context, Mandala {top_v['mandala']}, Sukta {top_v['sukta']} "
+                f"(addressed to {deity_name}) conveys these qualities through poetic invocation and ethical reflection."
+            )
+            context_str = (
+                f"Although the Rig Veda does not state this idea in exactly these modern terms, the passage can be understood as reflecting "
+                f"{theme_meta['label'].lower()}: {theme_meta['contemporary_connection']}"
+            )
+            theme_str = f"{direct_answer} ({top_v['verse_id']})"
+            contemporary_str = f"{context_str} [{top_v['verse_id']}]."
+        else:
+            direct_answer = (
+                f"In Rig Veda {top_v['mandala']}.{top_v['sukta']}.{top_v['verse']}, the hymn addressed to {deity_name} "
+                f"expresses reverence, sacred order, and moral aspiration within the Vedic tradition."
+            )
+            explanation_str = (
+                f"Read in its historical and liturgical context, Mandala {top_v['mandala']}, Sukta {top_v['sukta']} "
+                f"centers on {deity_name} and illustrates how the Vedic poets connected cosmic law with human conduct."
+            )
+            context_str = (
+                ""
+                if interpretation_type == "direct"
+                else (
+                    f"Although the Rig Veda does not state this idea in modern terms, {top_v['verse_id']} can be understood "
+                    f"contextually as an ancient poetic reflection rather than a literal modern claim."
+                )
+            )
+            theme_str = (
+                f"Vedic Hymnody & Sacred Inquiry: The retrieved verses center on {deity_name} "
+                f"in Mandala {top_v['mandala']}, Sukta {top_v['sukta']} [{top_v['verse_id']}]."
+            )
+            contemporary_str = (
+                f"Read as a reflective analogy, {top_v['verse_id']} illustrates how ancient poetic imagery "
+                f"articulates human aspiration and reverence without constituting literal modern science [{top_v['verse_id']}]."
+            )
+
         textual_evidence = (
-            f'In {top_v["verse_id"]} ({top_v.get("title", "Hymn")}, addressed to {top_v.get("deity", "Deity")}), '
-            f'the text states: "{top_v["english"]}" [{top_v["verse_id"]}].'
+            f'Rig Veda {top_v["mandala"]}.{top_v["sukta"]}.{top_v["verse"]} [{top_v["verse_id"]}] '
+            f'(addressed to {deity_name}) states: "{top_v["english"]}"'
         )
         if second_v:
             textual_evidence += (
-                f' Additionally, {second_v["verse_id"]} states: "{second_v["english"]}" [{second_v["verse_id"]}].'
+                f' Rig Veda {second_v["mandala"]}.{second_v["sukta"]}.{second_v["verse"]} [{second_v["verse_id"]}] '
+                f'adds: "{second_v["english"]}"'
             )
 
-        if theme_meta:
-            theme_str = (
-                f'{theme_meta["label"]} ({theme_meta["sanskrit_concept"]}): '
-                f'{theme_meta["description"]} [{top_v["verse_id"]}].'
-            )
-            contemporary_str = f'{theme_meta["contemporary_connection"]} [{top_v["verse_id"]}].'
-        else:
-            theme_str = (
-                f'Vedic Hymnody & Sacred Inquiry: The retrieved verses center on {top_v.get("deity", "Vedic deities")} '
-                f'in Mandala {top_v["mandala"]}, Sukta {top_v["sukta"]} [{top_v["verse_id"]}].'
-            )
-            contemporary_str = (
-                f'Read as a reflective analogy, {top_v["verse_id"]} illustrates how ancient poetic imagery '
-                f'articulates human aspiration and reverence without constituting literal modern science [{top_v["verse_id"]}].'
-            )
+        references_str = "; ".join(
+            f'Rig Veda {v["mandala"]}.{v["sukta"]}.{v["verse"]} [{v["verse_id"]}]'
+            for v in verses[:2]
+        )
 
         unsupported_str = (
-            "Epistemic Boundary: The Rig Veda corpus does not establish clinical medical treatments, "
-            "psychological therapy, or modern empirical science; contemporary connections are reflective "
-            "interpretations rather than direct scriptural facts."
+            "The Rig Veda corpus does not establish clinical medical treatments, corporate management frameworks, "
+            "psychological therapy, or modern empirical science; modern applications are contextual interpretations "
+            "rather than literal scriptural statements."
         )
 
         claims = [
@@ -673,12 +824,15 @@ class VedaWiseEngine:
             },
         ]
 
-        answer = (
-            f"1. Textual Evidence: {textual_evidence}\n\n"
-            f"2. Theme: {theme_str}\n\n"
-            f"3. Contemporary Connection: {contemporary_str}\n\n"
-            f"4. Unsupported Claim / Boundary: {unsupported_str}"
-        )
+        sections = [
+            f"Answer:\n{direct_answer}",
+            f"Explanation:\n{explanation_str}",
+        ]
+        if context_str:
+            sections.append(f"Context:\n{context_str}")
+        sections.append(f"Textual basis:\n{textual_evidence}")
+        sections.append(f"References:\n{references_str}")
+        answer = "\n\n".join(sections)
 
         return {
             "question": question,
@@ -689,6 +843,15 @@ class VedaWiseEngine:
             "abstention_reason": None,
             "confidence": "high",
             "answer": answer,
+            "structured_answer": {
+                "direct_answer": direct_answer,
+                "explanation": explanation_str,
+                "context": context_str or None,
+                "textual_basis": textual_evidence,
+                "references": references_str,
+                "is_indirect_connection": bool(context_str),
+                "interpretation_type": interpretation_type,
+            },
             "epistemic_layers": {
                 "textual_evidence": textual_evidence,
                 "theme": theme_str,
