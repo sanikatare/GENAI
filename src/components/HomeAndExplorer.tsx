@@ -66,25 +66,24 @@ const FEATURED_MANTRAS = [
 export function LandingPage({ navigate }: { navigate: (r: AppRoute) => void }) {
   const [isBlooming, setIsBlooming] = useState(false);
 
-  const triggerLotusTransition = (targetRoute: AppRoute = { page: 'home' }) => {
+  const triggerLotusTransition = () => {
     if (isBlooming) return;
     setIsBlooming(true);
     window.setTimeout(() => {
-      navigate(targetRoute);
-    }, 1250);
+      navigate({ page: 'home' });
+    }, 2150);
   };
 
   return (
     <div
       role="button"
       tabIndex={0}
-      aria-label="VedaWise Landing Page"
-      onClick={() => triggerLotusTransition({ page: 'home' })}
-      onDoubleClick={() => triggerLotusTransition({ page: 'home' })}
+      aria-label="VedaWise Landing Page (Double-click to enter dashboard)"
+      onDoubleClick={triggerLotusTransition}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          triggerLotusTransition({ page: 'home' });
+          triggerLotusTransition();
         }
       }}
       className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#430F0C] via-[#5B1612] to-[#3B0D0A] text-[#FBF7EE] flex flex-col items-center justify-center px-6 select-none cursor-pointer"
@@ -127,31 +126,6 @@ export function LandingPage({ navigate }: { navigate: (r: AppRoute) => void }) {
           An Explainable Conversational RAG System for Retrieving, Contextualizing, and Verifying
           Life-Oriented Themes from the Rig Veda
         </p>
-
-        <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              triggerLotusTransition({ page: 'home' });
-            }}
-            className="px-6 py-2.5 rounded-xl bg-[#E6B655] hover:bg-[#F2C76E] text-[#2B0A07] text-sm font-bold inline-flex items-center gap-2 shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-          >
-            <span>Enter VedaWise</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate({ page: 'scholar', initialTab: 'rag' });
-            }}
-            className="px-5 py-2.5 rounded-xl bg-[#FFFDF9]/10 hover:bg-[#FFFDF9]/20 text-[#FFFDF9] border border-[#E6B655]/40 text-sm font-semibold inline-flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-[#E6B655]" />
-            <span>Ask VedaWise</span>
-          </button>
-        </div>
       </div>
 
       {/* Faded, Dim Sacred Lotus Bloom Transition Overlay */}
