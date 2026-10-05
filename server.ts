@@ -4658,7 +4658,8 @@ export async function startServer() {
   });
 
   const distPath = path.join(__dirname, 'dist');
-  const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.RENDER);
+  const hasDist = fs.existsSync(path.join(distPath, 'index.html'));
+  const isProduction = (process.env.NODE_ENV === 'production' || Boolean(process.env.RENDER)) && hasDist;
 
   if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');

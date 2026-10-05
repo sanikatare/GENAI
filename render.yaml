@@ -3,7 +3,7 @@ services:
     name: vedawise-rigveda-rag
     runtime: node
     plan: starter
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
