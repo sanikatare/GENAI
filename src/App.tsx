@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppRoute, MandalaSummary } from './types';
 import { Header, Footer } from './components/HeaderFooter';
-import { LandingPage, HomePage, MandalaExplorerPage } from './components/HomeAndExplorer';
+import { HomePage, MandalaExplorerPage } from './components/HomeAndExplorer';
 import { MandalaDetailPage, HymnReaderPage } from './components/MandalaAndReader';
 import { SearchPage, ScholarPage } from './components/SearchAndScholar';
 
 function parseHashToRoute(hash: string): AppRoute {
   const clean = hash.replace(/^#\/?/, '').trim();
-  if (!clean || clean === 'landing') return { page: 'landing' };
+  if (!clean || clean === 'landing') return { page: 'scholar', initialTab: 'rag' };
   if (clean === 'dashboard' || clean === 'home') return { page: 'home' };
 
   const parts = clean.split('/');
@@ -41,7 +41,7 @@ function parseHashToRoute(hash: string): AppRoute {
 function routeToHash(route: AppRoute): string {
   switch (route.page) {
     case 'landing':
-      return '#/';
+      return '#/scholar';
     case 'home':
       return '#/dashboard';
     case 'explorer':
@@ -61,7 +61,9 @@ function routeToHash(route: AppRoute): string {
 
 export default function App() {
   const [route, setRoute] = useState<AppRoute>(() =>
-    typeof window !== 'undefined' ? parseHashToRoute(window.location.hash) : { page: 'landing' }
+    typeof window !== 'undefined'
+      ? parseHashToRoute(window.location.hash)
+      : { page: 'scholar', initialTab: 'rag' }
   );
   const [mandalas, setMandalas] = useState<MandalaSummary[]>([]);
 
@@ -141,10 +143,6 @@ export default function App() {
 
     navigate({ page: 'search', initialQuery: cleaned });
   };
-
-  if (route.page === 'landing') {
-    return <LandingPage navigate={navigate} />;
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF7EE] text-[#231610]">

@@ -52,8 +52,8 @@ export function Header({ route, navigate, onQuickJump }: HeaderProps) {
           {/* Brand Identity */}
           <button
             type="button"
-            onClick={() => navigate({ page: 'landing' })}
-            title="Return to VedaWise Landing Screen"
+            onClick={() => navigate({ page: 'scholar', initialTab: 'rag' })}
+            title="Go to Ask VedaWise"
             className="flex items-center gap-2.5 text-left group rounded-lg p-1 -ml-1 transition-colors shrink-0 cursor-pointer"
           >
             <div className="w-9 h-9 rounded-full bg-[#5B1612] text-[#E6B655] flex items-center justify-center border border-[#B6862C] group-hover:bg-[#430F0C] group-hover:scale-105 transition-all duration-200 shrink-0 shadow-2xs">
