@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Search, ArrowRight, Sparkles, Compass, BarChart3, RotateCcw } from 'lucide-react';
 import { AppRoute, MandalaSummary } from '../types';
-import { SacredMandalaWheel, SacredLandingMandala, CornerOrnament, SacredLotusBloom, SpiralLotusBloom } from './VedicOrnaments';
+import { SacredMandalaWheel, SacredLandingMandala, CornerOrnament, SacredLotusBloom, SpiralLotusBloom, SimpleDarkLotus, RevolvingSacredFlower } from './VedicOrnaments';
 import { LIFE_THEME_OPTIONS } from './SearchAndScholar';
 
 const FEATURED_MANTRAS = [
@@ -64,15 +64,38 @@ const FEATURED_MANTRAS = [
 ];
 
 export function LandingPage({ navigate }: { navigate: (r: AppRoute) => void }) {
-  const [isBlooming, setIsBlooming] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionTimerRef = React.useRef<number | null>(null);
 
-  const triggerTransition = (dest: AppRoute = { page: 'home' }) => {
-    if (isBlooming) return;
-    setIsBlooming(true);
-    window.setTimeout(() => {
-      navigate(dest);
-    }, 2050);
-  };
+  React.useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current !== null) {
+        window.clearTimeout(transitionTimerRef.current);
+      }
+    };
+  }, []);
+
+  const triggerTransition = React.useCallback(
+    (dest: AppRoute = { page: 'home' }) => {
+      if (isTransitioning) return;
+      setIsTransitioning(true);
+      transitionTimerRef.current = window.setTimeout(() => {
+        navigate(dest);
+      }, 2000);
+    },
+    [isTransitioning, navigate]
+  );
+
+  React.useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        triggerTransition({ page: 'home' });
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  }, [triggerTransition]);
 
   return (
     <div
@@ -88,39 +111,31 @@ export function LandingPage({ navigate }: { navigate: (r: AppRoute) => void }) {
       }}
       className="relative min-h-screen w-full overflow-hidden text-[#FBF7EE] flex flex-col items-center justify-center px-4 sm:px-6 select-none cursor-pointer"
       style={{
-        background: 'radial-gradient(circle at 50% 50%, #4D0F0C 0%, #3D0B08 45%, #240504 100%)',
+        background: 'radial-gradient(circle at 50% 50%, #46110D 0%, #350B08 45%, #1C0302 100%)',
       }}
     >
-      {/* Background Sacred Geometric Yantra / Mandala exactly matching the screenshot */}
+      {/* Background Sacred Geometric Yantra / Mandala Flower matching the aesthetic */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
         <SacredLandingMandala
-          className={`w-[620px] h-[620px] sm:w-[840px] sm:h-[840px] lg:w-[960px] lg:h-[960px] text-[#DECBA8]/20 animate-mandala-slow shrink-0 transition-all duration-1000 ${
-            isBlooming ? 'scale-125 opacity-0' : 'opacity-100'
+          className={`w-[660px] h-[660px] sm:w-[860px] sm:h-[860px] lg:w-[1020px] lg:h-[1020px] text-[#DECBA8]/20 animate-mandala-slow shrink-0 transition-opacity duration-500 ${
+            isTransitioning ? 'opacity-0' : 'opacity-100'
           }`}
         />
       </div>
 
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <SacredLandingMandala
-          className={`w-[360px] h-[360px] sm:w-[500px] sm:h-[500px] text-[#DECBA8]/12 animate-mandala-reverse shrink-0 transition-all duration-1000 ${
-            isBlooming ? 'scale-150 opacity-0' : 'opacity-100'
-          }`}
-        />
-      </div>
-
-      {/* Main Centered Content from Screenshot */}
+      {/* Main Centered Content */}
       <div
-        className={`relative z-10 max-w-3xl mx-auto text-center space-y-6 sm:space-y-7 transition-all duration-700 ease-out ${
-          isBlooming ? 'opacity-0 scale-95 pointer-events-none' : 'animate-page-enter'
+        className={`relative z-10 max-w-3xl mx-auto text-center space-y-5 sm:space-y-6 transition-all duration-400 ease-out ${
+          isTransitioning ? 'opacity-0 scale-95 pointer-events-none' : 'animate-page-enter'
         }`}
       >
         {/* Sanskrit Header Kicker */}
-        <p className="font-sanskrit text-sm sm:text-base text-[#DECBA8] tracking-widest font-normal">
+        <p className="font-sanskrit text-sm sm:text-base text-[#DECBA8]/85 tracking-[0.2em] font-normal">
           ॥ ऋग्वेदसंहिता · Rig Veda Mandalas 1–10 ॥
         </p>
 
         {/* Wordmark Title */}
-        <h1 className="font-cinzel text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight text-[#FFFDF9] leading-[1.04] drop-shadow-md">
+        <h1 className="font-cinzel text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight text-[#FFFDF9] leading-none drop-shadow-sm">
           VedaWise
         </h1>
 
@@ -130,52 +145,66 @@ export function LandingPage({ navigate }: { navigate: (r: AppRoute) => void }) {
         </p>
 
         {/* Informative Description Paragraph */}
-        <p className="font-serif-prose text-base sm:text-lg text-[#EADBC4] leading-relaxed max-w-2xl mx-auto pt-1 font-normal opacity-95">
+        <p className="font-serif-prose text-base sm:text-lg text-[#EADBC4] leading-relaxed max-w-2xl mx-auto font-normal opacity-90">
           An Explainable Conversational RAG System for Retrieving, Contextualizing, and Verifying
           Life-Oriented Themes from the Rig Veda
         </p>
-
-        {/* Interactive Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-3 sm:pt-4">
-          {/* Primary Golden Button: Enter VedaWise */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              triggerTransition({ page: 'home' });
-            }}
-            className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-lg bg-[#DCA54C] hover:bg-[#E5B35C] active:bg-[#CE963D] text-[#2A0806] font-semibold text-sm sm:text-base shadow-lg hover:shadow-[#DCA54C]/25 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 cursor-pointer"
-          >
-            <span>Enter VedaWise</span>
-            <ArrowRight className="w-4 h-4 text-[#2A0806] group-hover:translate-x-1 transition-transform duration-200" />
-          </button>
-
-          {/* Secondary Glass Button: Ask VedaWise */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              triggerTransition({ page: 'scholar', initialTab: 'rag' });
-            }}
-            className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-lg bg-[#430F0C]/45 hover:bg-[#5B1612]/75 border border-[#DECBA8]/40 hover:border-[#DECBA8]/80 text-[#FFFDF9] font-medium text-sm sm:text-base backdrop-blur-xs shadow-md hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-[#E5B869] group-hover:rotate-12 transition-transform duration-200" />
-            <span>Ask VedaWise</span>
-          </button>
-        </div>
-
-        {/* Subtle click anywhere helper */}
-        <p className="text-xs text-[#DECBA8]/50 pt-2 tracking-wide font-normal">
-          Click anywhere to enter the dashboard
-        </p>
       </div>
 
-      {/* Spiral Lotus Transition Overlay */}
-      {isBlooming && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 animate-spiral-wash" />
+      {/* Dark Mode Maroon Transition Overlay with Moving Golden Rings and Lotuses */}
+      {isTransitioning && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden animate-maroon-veil"
+          style={{
+            background: 'radial-gradient(circle at 50% 50%, #4E120E 0%, #320705 45%, #140202 100%)',
+          }}
+        >
+          {/* Moving Golden Rings in Background */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <svg
+              viewBox="0 0 800 800"
+              className="w-[720px] h-[720px] sm:w-[960px] sm:h-[960px] animate-golden-rings shrink-0"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="400" cy="400" r="360" stroke="#E5B869" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="6 8" />
+              <circle cx="400" cy="400" r="305" stroke="#DECBA8" strokeWidth="0.85" strokeOpacity="0.45" />
+              <circle cx="400" cy="400" r="250" stroke="#E5B869" strokeWidth="1.2" strokeOpacity="0.55" strokeDasharray="4 5" />
+              <circle cx="400" cy="400" r="195" stroke="#F5D076" strokeWidth="0.8" strokeOpacity="0.45" />
+              <circle cx="400" cy="400" r="140" stroke="#E5B869" strokeWidth="1.1" strokeOpacity="0.5" strokeDasharray="3 5" />
+            </svg>
+            <svg
+              viewBox="0 0 800 800"
+              className="absolute w-[620px] h-[620px] sm:w-[840px] sm:h-[840px] animate-golden-rings-counter shrink-0"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="400" cy="400" r="330" stroke="#E5B869" strokeWidth="0.85" strokeOpacity="0.4" strokeDasharray="8 6" />
+              <circle cx="400" cy="400" r="275" stroke="#F5D076" strokeWidth="0.95" strokeOpacity="0.4" />
+              <circle cx="400" cy="400" r="220" stroke="#DECBA8" strokeWidth="0.8" strokeOpacity="0.45" strokeDasharray="4 4" />
+              <circle cx="400" cy="400" r="165" stroke="#E5B869" strokeWidth="1" strokeOpacity="0.4" />
+            </svg>
+          </div>
+
+          {/* Ambient Moving Satellite Maroon Lotuses with Golden Borders */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="absolute animate-float-lotus-1 opacity-75">
+              <SimpleDarkLotus className="w-24 h-24 sm:w-28 sm:h-28" />
+            </div>
+            <div className="absolute animate-float-lotus-2 opacity-75">
+              <SimpleDarkLotus className="w-24 h-24 sm:w-28 sm:h-28" />
+            </div>
+            <div className="absolute animate-float-lotus-3 opacity-65">
+              <SimpleDarkLotus className="w-20 h-20 sm:w-24 sm:h-24" />
+            </div>
+            <div className="absolute animate-float-lotus-4 opacity-65">
+              <SimpleDarkLotus className="w-20 h-20 sm:w-24 sm:h-24" />
+            </div>
+          </div>
+
+          {/* Centerpiece: The Two Overlapping Maroon Flowers with Golden Borders (NO external ring) revolving */}
           <div className="relative z-10 flex items-center justify-center">
-            <SpiralLotusBloom className="w-[440px] h-[440px] sm:w-[640px] sm:h-[640px] lg:w-[760px] lg:h-[760px] animate-spiral-lotus-spin" />
+            <RevolvingSacredFlower className="w-[340px] h-[340px] sm:w-[460px] sm:h-[460px] animate-revolving-flower drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]" />
           </div>
         </div>
       )}

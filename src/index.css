@@ -298,6 +298,207 @@
   animation: spiralAuraWash 2100ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
+/* Simple Dark Lotus Transition */
+@keyframes darkVeilFade {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes simpleDarkLotusBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) rotate(-12deg);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.0) rotate(4deg);
+  }
+  75% {
+    opacity: 0.95;
+    transform: scale(1.15) rotate(16deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3) rotate(26deg);
+  }
+}
+
+.animate-dark-veil {
+  animation: darkVeilFade 1250ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-simple-dark-lotus {
+  animation: simpleDarkLotusBloom 1250ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Dark Mode Maroon Transition with Golden Rings and Moving Lotuses */
+@keyframes maroonVeilFadeIn {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes goldenRingsMove {
+  0% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.05) rotate(35deg);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(1.22) rotate(70deg);
+    opacity: 0.4;
+  }
+}
+
+@keyframes goldenRingsCounterMove {
+  0% {
+    transform: scale(0.85) rotate(0deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.08) rotate(-30deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.25) rotate(-65deg);
+    opacity: 0.35;
+  }
+}
+
+@keyframes floatLotusNW {
+  0% {
+    transform: translate(-30px, -30px) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate(-150px, -150px) scale(0.95) rotate(40deg);
+    opacity: 0.25;
+  }
+}
+
+@keyframes floatLotusNE {
+  0% {
+    transform: translate(30px, -30px) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate(150px, -150px) scale(0.95) rotate(-40deg);
+    opacity: 0.25;
+  }
+}
+
+@keyframes floatLotusSW {
+  0% {
+    transform: translate(-30px, 30px) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate(-150px, 150px) scale(0.95) rotate(-40deg);
+    opacity: 0.25;
+  }
+}
+
+@keyframes floatLotusSE {
+  0% {
+    transform: translate(30px, 30px) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate(150px, 150px) scale(0.95) rotate(40deg);
+    opacity: 0.25;
+  }
+}
+
+@keyframes flowerContinuousRevolve {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) rotate(0deg);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(0.95) rotate(65deg);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.06) rotate(155deg);
+  }
+  85% {
+    opacity: 0.95;
+    transform: scale(1.12) rotate(210deg);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(1.2) rotate(250deg);
+  }
+}
+
+.animate-maroon-veil {
+  animation: maroonVeilFadeIn 2000ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-light-parchment-veil {
+  animation: maroonVeilFadeIn 2000ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-golden-rings {
+  animation: goldenRingsMove 2000ms ease-out forwards;
+}
+
+.animate-golden-rings-counter {
+  animation: goldenRingsCounterMove 2000ms ease-out forwards;
+}
+
+.animate-float-lotus-1 {
+  animation: floatLotusNW 2000ms ease-out forwards;
+}
+
+.animate-float-lotus-2 {
+  animation: floatLotusNE 2000ms ease-out forwards;
+}
+
+.animate-float-lotus-3 {
+  animation: floatLotusSW 2000ms ease-out forwards;
+}
+
+.animate-float-lotus-4 {
+  animation: floatLotusSE 2000ms ease-out forwards;
+}
+
+.animate-revolving-flower {
+  animation: flowerContinuousRevolve 2000ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
 .animate-dashboard-lotus-enter {
   animation: dashboardLotusReveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }

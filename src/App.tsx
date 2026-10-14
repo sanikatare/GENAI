@@ -144,25 +144,26 @@ export default function App() {
     navigate({ page: 'search', initialQuery: cleaned });
   };
 
+  if (route.page === 'landing') {
+    return <LandingPage navigate={navigate} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF7EE] text-[#231610]">
-      {route.page !== 'landing' && (
-        <Header
-          route={route}
-          navigate={navigate}
-          mandalas={mandalas}
-          onQuickJump={handleQuickJump}
-        />
-      )}
+      <Header
+        route={route}
+        navigate={navigate}
+        mandalas={mandalas}
+        onQuickJump={handleQuickJump}
+      />
 
       <main className="flex-1">
         <div
           key={`${route.page}-${'mandala' in route ? route.mandala : ''}-${
             'sukta' in route ? route.sukta : ''
           }`}
-          className={route.page === 'landing' ? '' : 'animate-page-enter'}
+          className="animate-page-enter"
         >
-          {route.page === 'landing' && <LandingPage navigate={navigate} />}
           {route.page === 'home' && <HomePage mandalas={mandalas} navigate={navigate} />}
           {route.page === 'explorer' && (
             <MandalaExplorerPage mandalas={mandalas} navigate={navigate} />
@@ -202,7 +203,7 @@ export default function App() {
         </div>
       </main>
 
-      {route.page !== 'landing' && <Footer navigate={navigate} mandalas={mandalas} />}
+      <Footer navigate={navigate} mandalas={mandalas} />
     </div>
   );
 }

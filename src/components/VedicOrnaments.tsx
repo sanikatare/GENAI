@@ -393,3 +393,175 @@ export function SpiralLotusBloom({ className = 'w-[520px] h-[520px]' }: { classN
     </svg>
   );
 }
+
+export function SimpleDarkLotus({ className = 'w-72 h-72' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 320 320"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id="simpleLotusMaroonGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#5E1410" stopOpacity="0.35" />
+          <stop offset="60%" stopColor="#3A0806" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#1C0302" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* Gentle dark warm maroon aura */}
+      <circle cx="160" cy="160" r="145" fill="url(#simpleLotusMaroonGlow)" />
+
+      {/* 8 Primary Elegant Pointed Maroon Petals with Golden Border */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <g key={`petal-dark-1-${i}`} transform={`rotate(${i * 45} 160 160)`}>
+          <path
+            d="M160 38 C182 82, 186 126, 160 160 C134 126, 138 82, 160 38 Z"
+            fill="#480F0B"
+            fillOpacity="0.82"
+            stroke="#E5B869"
+            strokeWidth="1.25"
+            strokeOpacity="0.95"
+          />
+          {/* Inner Petal Contour */}
+          <path
+            d="M160 64 C172 96, 172 130, 160 160 C148 130, 148 96, 160 64 Z"
+            stroke="#F5D076"
+            strokeWidth="0.75"
+            strokeOpacity="0.7"
+          />
+          <circle cx="160" cy="38" r="1.6" fill="#FFF4D0" />
+        </g>
+      ))}
+
+      {/* 8 Intersecting Offset Maroon Petals with Golden Border */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <g key={`petal-dark-2-${i}`} transform={`rotate(${i * 45 + 22.5} 160 160)`}>
+          <path
+            d="M160 72 C175 104, 175 136, 160 160 C145 136, 145 104, 160 72 Z"
+            fill="#360806"
+            fillOpacity="0.88"
+            stroke="#DECBA8"
+            strokeWidth="1"
+            strokeOpacity="0.85"
+          />
+        </g>
+      ))}
+
+      {/* Central Bindu Core */}
+      <circle cx="160" cy="160" r="22" fill="#240403" stroke="#E5B869" strokeWidth="1.3" strokeOpacity="0.95" />
+      <circle cx="160" cy="160" r="13" stroke="#DECBA8" strokeWidth="0.8" strokeDasharray="2 3" strokeOpacity="0.8" />
+      <circle cx="160" cy="160" r="4" fill="#FFF4D0" />
+    </svg>
+  );
+}
+
+export function RevolvingSacredFlower({ className = 'w-72 h-72' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 360 360"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <defs>
+        {/* Rich sacred deep maroon petal gradients (maroon body, no yellow fill) */}
+        <linearGradient id="maroonPetal1" x1="180" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#6E1B15" />
+          <stop offset="28%" stopColor="#54130F" />
+          <stop offset="70%" stopColor="#380806" />
+          <stop offset="100%" stopColor="#1F0302" />
+        </linearGradient>
+
+        <linearGradient id="maroonPetal2" x1="180" y1="44" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#5F1612" />
+          <stop offset="35%" stopColor="#480E0B" />
+          <stop offset="75%" stopColor="#2E0604" />
+          <stop offset="100%" stopColor="#180202" />
+        </linearGradient>
+
+        {/* Gleaming luxury metallic gold border gradients */}
+        <linearGradient id="goldBorder1" x1="180" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFF4D0" />
+          <stop offset="25%" stopColor="#F5D076" />
+          <stop offset="65%" stopColor="#E5B869" />
+          <stop offset="100%" stopColor="#B37D28" />
+        </linearGradient>
+
+        <linearGradient id="goldBorder2" x1="180" y1="44" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFEAB3" />
+          <stop offset="30%" stopColor="#E5B869" />
+          <stop offset="75%" stopColor="#D4A24B" />
+          <stop offset="100%" stopColor="#9C6B1E" />
+        </linearGradient>
+
+        {/* Ambient Dark Maroon Glow behind Bindu */}
+        <radialGradient id="maroonCenterGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#661410" stopOpacity="0.45" />
+          <stop offset="50%" stopColor="#3C0806" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#1C0302" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* Gentle center maroon radiance */}
+      <circle cx="180" cy="180" r="140" fill="url(#maroonCenterGlow)" />
+
+      {/* FLOWER 1: Primary Sacred Lotus (12 sculpted maroon petals with golden borders) - NO external ring */}
+      <g className="origin-center">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <g key={`flower1-petal-${i}`} transform={`rotate(${i * 30} 180 180)`}>
+            {/* Rich Maroon Petal Body with Gleaming Golden Border */}
+            <path
+              d="M180 22 C210 68, 215 125, 180 180 C145 125, 150 68, 180 22 Z"
+              fill="url(#maroonPetal1)"
+              stroke="url(#goldBorder1)"
+              strokeWidth="1.4"
+            />
+            {/* Fine interior golden vein line */}
+            <path
+              d="M180 50 C192 88, 194 125, 180 180 C166 125, 168 88, 180 50 Z"
+              stroke="#F5D076"
+              strokeWidth="0.85"
+              strokeOpacity="0.8"
+            />
+            {/* Golden tip bindu jewel */}
+            <circle cx="180" cy="23" r="2.2" fill="#FFF4D0" stroke="#E5B869" strokeWidth="0.5" />
+          </g>
+        ))}
+      </g>
+
+      {/* FLOWER 2: Overlapping Sacred Lotus (12 sculpted maroon petals offset by 15 deg with golden borders) */}
+      <g className="origin-center">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <g key={`flower2-petal-${i}`} transform={`rotate(${i * 30 + 15} 180 180)`}>
+            {/* Rich Maroon Petal Body with Gleaming Golden Border */}
+            <path
+              d="M180 44 C205 85, 206 135, 180 180 C154 135, 155 85, 180 44 Z"
+              fill="url(#maroonPetal2)"
+              stroke="url(#goldBorder2)"
+              strokeWidth="1.3"
+            />
+            {/* Fine interior golden vein line */}
+            <path
+              d="M180 72 C192 104, 192 138, 180 180 C168 138, 168 104, 180 72 Z"
+              stroke="#DECBA8"
+              strokeWidth="0.75"
+              strokeOpacity="0.7"
+            />
+            {/* Golden tip bindu jewel */}
+            <circle cx="180" cy="45" r="1.8" fill="#FFEAB3" stroke="#D4A24B" strokeWidth="0.5" />
+          </g>
+        ))}
+      </g>
+
+      {/* Central Bindu Hub where the two flowers meet - NO external ring */}
+      <circle cx="180" cy="180" r="23" fill="#280504" stroke="#E5B869" strokeWidth="1.5" />
+      <circle cx="180" cy="180" r="14" fill="#4A0F0C" stroke="#F5D076" strokeWidth="1" strokeDasharray="2.5 2.5" />
+      <circle cx="180" cy="180" r="7" fill="#6A1610" stroke="#FFF4D0" strokeWidth="0.9" />
+      <circle cx="180" cy="180" r="3.2" fill="#FFFDF9" />
+    </svg>
+  );
+}
