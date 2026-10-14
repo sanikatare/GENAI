@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Search, ArrowRight, Sparkles, Compass, BarChart3, RotateCcw } from 'lucide-react';
 import { AppRoute, MandalaSummary } from '../types';
-import { SacredMandalaWheel, CornerOrnament, SacredLotusBloom } from './VedicOrnaments';
+import { SacredMandalaWheel, SacredLandingMandala, CornerOrnament, SacredLotusBloom, SpiralLotusBloom } from './VedicOrnaments';
 import { LIFE_THEME_OPTIONS } from './SearchAndScholar';
 
 const FEATURED_MANTRAS = [
@@ -66,73 +66,117 @@ const FEATURED_MANTRAS = [
 export function LandingPage({ navigate }: { navigate: (r: AppRoute) => void }) {
   const [isBlooming, setIsBlooming] = useState(false);
 
-  const triggerLotusTransition = () => {
+  const triggerTransition = (dest: AppRoute = { page: 'home' }) => {
     if (isBlooming) return;
     setIsBlooming(true);
     window.setTimeout(() => {
-      navigate({ page: 'home' });
-    }, 2150);
+      navigate(dest);
+    }, 2050);
   };
 
   return (
     <div
       role="button"
       tabIndex={0}
-      aria-label="VedaWise Landing Page (Double-click to enter dashboard)"
-      onDoubleClick={triggerLotusTransition}
+      aria-label="VedaWise Landing Page (Click anywhere to enter dashboard)"
+      onClick={() => triggerTransition({ page: 'home' })}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          triggerLotusTransition();
+          triggerTransition({ page: 'home' });
         }
       }}
-      className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#430F0C] via-[#5B1612] to-[#3B0D0A] text-[#FBF7EE] flex flex-col items-center justify-center px-6 select-none cursor-pointer"
+      className="relative min-h-screen w-full overflow-hidden text-[#FBF7EE] flex flex-col items-center justify-center px-4 sm:px-6 select-none cursor-pointer"
+      style={{
+        background: 'radial-gradient(circle at 50% 50%, #4D0F0C 0%, #3D0B08 45%, #240504 100%)',
+      }}
     >
-      {/* Concentric Animated Mandala Wheels Behind Centered Text */}
+      {/* Background Sacred Geometric Yantra / Mandala exactly matching the screenshot */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <SacredMandalaWheel
-          className={`w-[540px] h-[540px] sm:w-[760px] sm:h-[760px] text-[#E6B655]/12 animate-mandala-slow shrink-0 transition-all duration-1000 ${
-            isBlooming ? 'scale-110 opacity-0' : ''
-          }`}
-        />
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <SacredMandalaWheel
-          className={`w-[320px] h-[320px] sm:w-[460px] sm:h-[460px] text-[#E6B655]/10 animate-mandala-reverse shrink-0 transition-all duration-1000 ${
-            isBlooming ? 'scale-125 opacity-0' : ''
+        <SacredLandingMandala
+          className={`w-[620px] h-[620px] sm:w-[840px] sm:h-[840px] lg:w-[960px] lg:h-[960px] text-[#DECBA8]/20 animate-mandala-slow shrink-0 transition-all duration-1000 ${
+            isBlooming ? 'scale-125 opacity-0' : 'opacity-100'
           }`}
         />
       </div>
 
-      {/* Centrally Aligned Hero Typography */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        <SacredLandingMandala
+          className={`w-[360px] h-[360px] sm:w-[500px] sm:h-[500px] text-[#DECBA8]/12 animate-mandala-reverse shrink-0 transition-all duration-1000 ${
+            isBlooming ? 'scale-150 opacity-0' : 'opacity-100'
+          }`}
+        />
+      </div>
+
+      {/* Main Centered Content from Screenshot */}
       <div
-        className={`relative z-10 max-w-3xl mx-auto text-center space-y-5 transition-all duration-1000 ${
+        className={`relative z-10 max-w-3xl mx-auto text-center space-y-6 sm:space-y-7 transition-all duration-700 ease-out ${
           isBlooming ? 'opacity-0 scale-95 pointer-events-none' : 'animate-page-enter'
         }`}
       >
-        <p className="font-sanskrit text-sm sm:text-base text-[#E6B655] tracking-wider">
+        {/* Sanskrit Header Kicker */}
+        <p className="font-sanskrit text-sm sm:text-base text-[#DECBA8] tracking-widest font-normal">
           ॥ ऋग्वेदसंहिता · Rig Veda Mandalas 1–10 ॥
         </p>
 
-        <h1 className="font-cinzel text-5xl sm:text-7xl font-semibold tracking-tight text-[#FFFDF9] leading-[1.06]">
+        {/* Wordmark Title */}
+        <h1 className="font-cinzel text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight text-[#FFFDF9] leading-[1.04] drop-shadow-md">
           VedaWise
         </h1>
 
-        <p className="font-display text-2xl sm:text-3xl font-medium text-[#E6B655] tracking-tight">
+        {/* Subtitle in Warm Antique Gold */}
+        <p className="font-display text-2xl sm:text-3xl md:text-4xl font-normal text-[#E5B869] tracking-tight leading-snug">
           Ancient Knowledge. Explained with Evidence.
         </p>
 
-        <p className="font-inter text-sm sm:text-lg text-[#EADBC4] leading-relaxed max-w-2xl mx-auto pt-1">
+        {/* Informative Description Paragraph */}
+        <p className="font-serif-prose text-base sm:text-lg text-[#EADBC4] leading-relaxed max-w-2xl mx-auto pt-1 font-normal opacity-95">
           An Explainable Conversational RAG System for Retrieving, Contextualizing, and Verifying
           Life-Oriented Themes from the Rig Veda
         </p>
+
+        {/* Interactive Action Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-4 pt-3 sm:pt-4">
+          {/* Primary Golden Button: Enter VedaWise */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerTransition({ page: 'home' });
+            }}
+            className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-lg bg-[#DCA54C] hover:bg-[#E5B35C] active:bg-[#CE963D] text-[#2A0806] font-semibold text-sm sm:text-base shadow-lg hover:shadow-[#DCA54C]/25 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 cursor-pointer"
+          >
+            <span>Enter VedaWise</span>
+            <ArrowRight className="w-4 h-4 text-[#2A0806] group-hover:translate-x-1 transition-transform duration-200" />
+          </button>
+
+          {/* Secondary Glass Button: Ask VedaWise */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerTransition({ page: 'scholar', initialTab: 'rag' });
+            }}
+            className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-lg bg-[#430F0C]/45 hover:bg-[#5B1612]/75 border border-[#DECBA8]/40 hover:border-[#DECBA8]/80 text-[#FFFDF9] font-medium text-sm sm:text-base backdrop-blur-xs shadow-md hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-[#E5B869] group-hover:rotate-12 transition-transform duration-200" />
+            <span>Ask VedaWise</span>
+          </button>
+        </div>
+
+        {/* Subtle click anywhere helper */}
+        <p className="text-xs text-[#DECBA8]/50 pt-2 tracking-wide font-normal">
+          Click anywhere to enter the dashboard
+        </p>
       </div>
 
-      {/* Faded, Dim Sacred Lotus Bloom Transition Overlay */}
+      {/* Spiral Lotus Transition Overlay */}
       {isBlooming && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 bg-[#260604] animate-lotus-wash" />
-          <SacredLotusBloom className="relative z-10 w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] animate-lotus-unfurl" />
+          <div className="absolute inset-0 animate-spiral-wash" />
+          <div className="relative z-10 flex items-center justify-center">
+            <SpiralLotusBloom className="w-[440px] h-[440px] sm:w-[640px] sm:h-[640px] lg:w-[760px] lg:h-[760px] animate-spiral-lotus-spin" />
+          </div>
         </div>
       )}
     </div>

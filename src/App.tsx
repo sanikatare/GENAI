@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppRoute, MandalaSummary } from './types';
 import { Header, Footer } from './components/HeaderFooter';
-import { HomePage, MandalaExplorerPage } from './components/HomeAndExplorer';
+import { LandingPage, HomePage, MandalaExplorerPage } from './components/HomeAndExplorer';
 import { MandalaDetailPage, HymnReaderPage } from './components/MandalaAndReader';
 import { SearchPage, ScholarPage } from './components/SearchAndScholar';
 
 function parseHashToRoute(hash: string): AppRoute {
   const clean = hash.replace(/^#\/?/, '').trim();
-  if (!clean || clean === 'landing') return { page: 'scholar', initialTab: 'rag' };
+  if (!clean || clean === 'landing') return { page: 'landing' };
   if (clean === 'dashboard' || clean === 'home') return { page: 'home' };
 
   const parts = clean.split('/');
@@ -41,7 +41,7 @@ function parseHashToRoute(hash: string): AppRoute {
 function routeToHash(route: AppRoute): string {
   switch (route.page) {
     case 'landing':
-      return '#/scholar';
+      return '#/landing';
     case 'home':
       return '#/dashboard';
     case 'explorer':
@@ -63,7 +63,7 @@ export default function App() {
   const [route, setRoute] = useState<AppRoute>(() =>
     typeof window !== 'undefined'
       ? parseHashToRoute(window.location.hash)
-      : { page: 'scholar', initialTab: 'rag' }
+      : { page: 'landing' }
   );
   const [mandalas, setMandalas] = useState<MandalaSummary[]>([]);
 
@@ -146,20 +146,23 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF7EE] text-[#231610]">
-      <Header
-        route={route}
-        navigate={navigate}
-        mandalas={mandalas}
-        onQuickJump={handleQuickJump}
-      />
+      {route.page !== 'landing' && (
+        <Header
+          route={route}
+          navigate={navigate}
+          mandalas={mandalas}
+          onQuickJump={handleQuickJump}
+        />
+      )}
 
       <main className="flex-1">
         <div
           key={`${route.page}-${'mandala' in route ? route.mandala : ''}-${
             'sukta' in route ? route.sukta : ''
           }`}
-          className="animate-page-enter"
+          className={route.page === 'landing' ? '' : 'animate-page-enter'}
         >
+          {route.page === 'landing' && <LandingPage navigate={navigate} />}
           {route.page === 'home' && <HomePage mandalas={mandalas} navigate={navigate} />}
           {route.page === 'explorer' && (
             <MandalaExplorerPage mandalas={mandalas} navigate={navigate} />
@@ -199,7 +202,7 @@ export default function App() {
         </div>
       </main>
 
-      <Footer navigate={navigate} mandalas={mandalas} />
+      {route.page !== 'landing' && <Footer navigate={navigate} mandalas={mandalas} />}
     </div>
   );
 }

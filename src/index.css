@@ -213,6 +213,91 @@
   animation: lotusLightWash 2200ms ease-in-out forwards;
 }
 
+/* Dynamic Spiral Lotus Transition Animation */
+@keyframes spiralLotusSpinBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.25) rotate(0deg);
+  }
+  30% {
+    opacity: 0.95;
+    transform: scale(0.85) rotate(90deg);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.35) rotate(220deg);
+  }
+  85% {
+    opacity: 0.75;
+    transform: scale(1.95) rotate(320deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.8) rotate(420deg);
+  }
+}
+
+@keyframes spiralRingSpinClockwise {
+  from {
+    transform: rotate(0deg) scale(0.85);
+  }
+  to {
+    transform: rotate(260deg) scale(1.45);
+  }
+}
+
+@keyframes spiralRingSpinCounter {
+  from {
+    transform: rotate(360deg) scale(0.85);
+  }
+  to {
+    transform: rotate(60deg) scale(1.45);
+  }
+}
+
+@keyframes spiralAuraWash {
+  0% {
+    opacity: 0;
+    background-color: rgba(38, 5, 4, 0);
+  }
+  30% {
+    opacity: 0.85;
+    background-color: rgba(67, 15, 12, 0.8);
+  }
+  75% {
+    opacity: 0.96;
+    background-color: #F4ECE1;
+  }
+  100% {
+    opacity: 1;
+    background-color: #FBF7EE;
+  }
+}
+
+.animate-spiral-lotus-spin {
+  animation: spiralLotusSpinBloom 2100ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-spiral-outer {
+  animation: spiralRingSpinClockwise 2100ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-spiral-mid {
+  animation: spiralRingSpinCounter 2100ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-spiral-inner {
+  animation: spiralRingSpinClockwise 2100ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-spiral-halo {
+  animation: slowSpin 25s linear infinite;
+}
+
+.animate-spiral-wash {
+  animation: spiralAuraWash 2100ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
 .animate-dashboard-lotus-enter {
   animation: dashboardLotusReveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
